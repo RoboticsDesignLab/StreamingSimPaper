@@ -1,0 +1,197 @@
+%%%% acra.tex
+
+\typeout{ACRA Instructions for Authors}
+
+% This is the instructions for authors for ACRA.
+\documentclass{article}
+\usepackage{acra}
+% The file acra.sty is the style file for ACRA. 
+% The file named.sty contains macros for named citations as produced 
+% by named.bst.
+
+% The preparation of these files was supported by Schlumberger Palo Alto
+% Research, AT\&T Bell Laboratories, and Morgan Kaufmann Publishers.
+% Shirley Jowell, of Morgan Kaufmann Publishers, and Peter F.
+% Patel-Schneider, of AT\&T Bell Laboratories collaborated on their
+% preparation. 
+
+% These instructions can be modified and used in other conferences as long
+% as credit to the authors and supporting agencies is retained, this notice
+% is not changed, and further modification or reuse is not restricted.
+% Neither Shirley Jowell nor Peter F. Patel-Schneider can be listed as
+% contacts for providing assistance without their prior permission.
+
+% To use for other conferences, change references to files and the
+% conference appropriate and use other authors, contacts, publishers, and
+% organizations.
+% Also change the deadline and address for returning papers and the length and
+% page charge instructions.
+% Put where the files are available in the appropriate places.
+
+\title{Middleware for Parallelization of Multiplayer Simulation}
+\author{Peter Böhm \\ ACME University, Australia \\ 
+peter@nextlogic.biz}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Computer simulations have become the standard for modeling of behavior of various natural systems. The more complex the model the more sophisticated and more expansive hardware is required to run the simulation including multiple CPUs and GPUs. To achieve a realistic model, the simulation needs to be run on a high fidelity simulator like Microsoft's AirSim. Once the data has been generated, they need to be analyzed and the results visualized. The simulations often generate considerable amount of data about the simulated processes such as positions, velocities, rotations, collisions, environmental conditions, etc. During the simulation, these data need to be available to the solver for decision making calculations and possibly a progress visualizer. The data also need to be persisted for future analysis. When modeling interaction between multiple agents, the control and tracking of agents needs to be parallelized to allow for asynchronous operation and communication. The updates cannot happen in a single threaded control loop because that would introduce undesirable delays and move dependencies. \emph{Somehow converge to the need for a middleware that would eliminate the need to build this from scratch...} 
+\end{abstract}
+
+\section{Introduction}
+
+\emph{Something about various uses of UAVs and importance of determination of the right strategy. Probably mention differential games as a theoretical framework and a couple of sentences about how it uses diff equations to describe the state. The simulation can be used to confirm the results in a realistic setting but also to train the agents, e.g. using RL. }
+
+\emph{Couple of sentences about simulators, how they are important because the realistically model the environment and it's one less very messy thing to worry about. Briefly discuss some of the available sims, their strengths and weaknesses?}
+
+\emph{More details about AirSim - possibly some details from the MS paper. How it provides actual location but also sensors}
+
+\subsection{??? Challenges/Tasks When Using the Sims ???} 
+The corresponding author is requested to email the following
+information along with the paper: 1. title of the paper, 
+2. name and postal address, email address.
+
+\subsection{Word Processing Software}
+
+As detailed below, ACRA has prepared and made available a set of
+\LaTeX{} macros and Word templates for use in formatting your paper.
+If you are using some other word processing software (such as
+WordPerfect, etc.), please follow the format instructions given below
+and ensure that your final paper looks as much like this sample as
+possible.
+
+\section{Programming Model}
+
+
+\section{Implementation}
+
+\LaTeX{} and Bib\TeX{} style files, and Word templates that implement these 
+instructions can be retrieved electronically.  See the ACRA homepage for 
+details under
+\verb+http://www.araa.asn.au/acra+
+
+\subsection{Settings}
+
+Prepare manuscripts two columns to a page, in the manner in which these
+instructions are printed.  The exact dimensions for pages are:
+\begin{itemize}
+\item left and right margins: $.75''$
+\item column width: $3.375''$
+\item gap between columns: $.25''$
+\item top margin---first page: $1.375''$
+\item top margin---other pages: $.75''$
+\item bottom margin: $1.25''$
+\item column height---first page: $6.625''$
+\item column height---other pages: $9''$
+\end{itemize}
+
+All measurements assume an {\bf $8$-$1/2 \times 11''$} page size.  
+For A4-size paper use the given top and left margins, column width,
+height, and gap and modify the bottom and right margins as necessary.
+
+\subsection{Tracking State of the Agents}
+
+Center the title on the entire width of the page in a 14-point bold font.
+Place the names of authors below the title in a 12-point bold font, and
+affiliations and complete addresses directly below the author names in a
+12-point (non-bold) font.
+
+Credit to a sponsoring agency appears in a footnote at the bottom of the
+left column of the first page.  See the example in these instructions.
+
+\subsection{Persistence}
+
+Place the abstract at the beginning of the first column $3.0''$ from the
+top of the page, unless that does not leave enough room for the title and
+author information.  Use a slightly smaller width than in the body of the
+paper.  Head the abstract with ``Abstract'' centered above the body of the
+abstract in a 12-point bold font.  The body of the abstract should be in
+the same font as the body of the paper.
+
+The abstract should be a concise, one-paragraph summary
+describing the general thesis and conclusion of your
+paper. A reader should be able to learn the purpose of the
+paper and the reason for its importance from the abstract. The
+abstract should be no more than 200 words long.
+
+\subsection{Visualization}
+
+The main body of the text immediately follows the abstract. 
+Use 10-point type in a clear, readable font with 1-point leading (10 on
+11).  For reasons of uniformity, use Computer Modern font if possible.  If
+Computer Modern is unavailable, Times Roman is preferred.
+
+Indent when starting a new paragraph, except after major headings.
+
+\subsection{Grid Search}
+
+When necessary, headings should be used to separate major sections of your
+paper.
+(These instructions use many headings to demonstrate their
+appearance---your paper should have fewer headings.)
+
+
+\section{Agent Control a.k.a. (communication with) the Solver}
+
+\section{Conclusions}
+
+\section*{Acknowledgments}
+The preparation of these instructions and the LaTEX and BibTEX files that implement them was supported by Schlumberger Palo Alto Research, AT\&T Bell Laboratories, and Morgan Kaufmann Publishers.
+
+
+%% This section was initially prepared using BibTeX.  The .bbl file was
+%% placed here later
+%\bibliography{publications}
+%\bibliographystyle{named}
+%% The file named.bst is a bibliography style file for BibTeX 0.99c
+\begin{thebibliography}{}
+
+\bibitem[\protect\citeauthoryear{Abelson \bgroup \em et al.\egroup
+  }{1985}]{abelson-et-al:scheme}
+Harold Abelson, Gerald~Jay Sussman, and Julie Sussman.
+\newblock {\em Structure and Interpretation of Computer Programs}.
+\newblock MIT Press, Cambridge, Massachusetts, 1985.
+
+\bibitem[\protect\citeauthoryear{Brachman and
+  Schmolze}{1985}]{brachman-schmolze:kl-one}
+Ronald~J. Brachman and James~G. Schmolze.
+\newblock An overview of the {KL-ONE} knowledge representation system.
+\newblock {\em Cognitive Science}, 9(2):171--216, April--June 1985.
+
+\bibitem[\protect\citeauthoryear{Cheeseman}{1985}]{cheeseman:probability}
+Peter Cheeseman.
+\newblock In defence of probability.
+\newblock In {\em Proceedings of the Ninth International Joint Conference on
+  Artificial Intelligence}, pages 1002--1009, Los Angeles, California, August
+  1985. International Joint Committee on Artificial Intelligence.
+
+\bibitem[\protect\citeauthoryear{Haugeland}{1981}]{haugeland:mind-design}
+John Haugeland, editor.
+\newblock {\em Mind Design}.
+\newblock Bradford Books, Montgomery, Vermont, 1981.
+
+\bibitem[\protect\citeauthoryear{Lenat}{1981}]{lenat:heuristics}
+Douglas~B. Lenat.
+\newblock The nature of heuristics.
+\newblock Technical Report CIS-12 (SSL-81-1), Xerox Palo Alto Research Centers,
+  April 1981.
+
+\bibitem[\protect\citeauthoryear{Levesque}{1984a}]{levesque:functional-foundat%
+ions}
+Hector~J. Levesque.
+\newblock Foundations of a functional approach to knowledge representation.
+\newblock {\em Artificial Intelligence}, 23(2):155--212, July 1984.
+
+\bibitem[\protect\citeauthoryear{Levesque}{1984b}]{levesque:belief}
+Hector~J. Levesque.
+\newblock A logic of implicit and explicit belief.
+\newblock In {\em Proceedings of the Fourth National Conference on Artificial
+  Intelligence}, pages 198--202, Austin, Texas, August 1984. American
+  Association for Artificial Intelligence.
+
+\end{thebibliography}
+
+\end{document}
+
