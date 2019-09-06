@@ -10,8 +10,9 @@ import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.ObjectMapper
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimBooleanResponse, AirSimMapResponse, AirSimRequest, AirSimResponseWithMsgId, AirSimStringResponse, RpcConnect}
 import org.msgpack.jackson.dataformat.MessagePackFactory
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.Random
 
@@ -50,7 +51,7 @@ class MsgPackRpcActor(remote: InetSocketAddress, listener: ActorRef) extends Act
   import context.dispatcher
 
   val r: Random.type = scala.util.Random
-  var requestSender: Option[ActorRef] = None
+  var senders: mutable.Map[Int, ActorRef] = mutable.Map()
   implicit val timeout = Timeout(1.second)
 
   override def receive: Receive = receiveDisconnected()
@@ -68,7 +69,7 @@ class MsgPackRpcActor(remote: InetSocketAddress, listener: ActorRef) extends Act
       system.scheduler.scheduleOnce(delay) {
         IO(Tcp) ! Connect(remote)
       }
-      // context stop self
+    // context stop self
 
     case c: Connected =>
       log.info("Connected")
@@ -85,8 +86,8 @@ class MsgPackRpcActor(remote: InetSocketAddress, listener: ActorRef) extends Act
 
     case cmd: AirSimRequest =>
       log.info(s"Received command: ${cmd.command}")
-      requestSender = Some(sender())
-      val msgid = 42
+      val msgid = uniqueMsgId
+      senders.update(msgid, sender())
       val message = MsgPackRpcActor.packAndByteString(
         Array(MsgPackRpcActor.REQUEST, msgid, cmd.command, cmd.args)
       )
@@ -99,7 +100,12 @@ class MsgPackRpcActor(remote: InetSocketAddress, listener: ActorRef) extends Act
 
     case Received(response) =>
       log.debug(s"Received response from the socket:\n${response.utf8String}")
-      (listener ? response).mapTo[AirSimResponseWithMsgId].map(r => requestSender.map(s => s ! r.response))
+      (listener ? response).mapTo[AirSimResponseWithMsgId]
+        .map(r =>
+          senders.remove(r.msgId)
+            .map(s => s ! r.response)
+            .getOrElse(log.error(s"Cannot find sender for msgId: ${r.msgId}"))
+        )
 
     case "close" =>
       log.info("Closing connection...")
@@ -110,14 +116,19 @@ class MsgPackRpcActor(remote: InetSocketAddress, listener: ActorRef) extends Act
 
       context.become(receiveDisconnected())
 
-//      log.info("Retrying connection in 2 seconds...")
-//      system.scheduler.scheduleOnce(2.seconds) {
-//        IO(Tcp) ! Connect(remote)
-//      }
+    //      log.info("Retrying connection in 2 seconds...")
+    //      system.scheduler.scheduleOnce(2.seconds) {
+    //        IO(Tcp) ! Connect(remote)
+    //      }
 
 
     // context stop self
 
+  }
+
+  def uniqueMsgId: Int = {
+    val id = r.nextInt(Int.MaxValue)
+    if (senders.get(id).isEmpty) id else uniqueMsgId
   }
 
 }

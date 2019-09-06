@@ -2,16 +2,21 @@ package net.nextlogic.airsim.api.rpc
 
 import java.net.InetSocketAddress
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{EventFilter, ImplicitSender, TestKit}
+import akka.pattern.ask
+import akka.util.Timeout
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.typesafe.config.ConfigFactory
 import net.nextlogic.airsim.api.AirSimClientActor
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimBooleanResponse, AirSimMapResponse, AirSimRequest, AirSimStringResponse, RpcConnect}
+import net.nextlogic.airsim.api.rpc.MsgPackRpcActorSpec.TestySender
 import net.nextlogic.rpc.Server.system
 import net.nextlogic.rpc.TCPConnectionManager
 import org.msgpack.jackson.dataformat.MessagePackFactory
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
+
+import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 
 class MsgPackRpcActorSpec extends TestKit(
@@ -64,6 +69,29 @@ class MsgPackRpcActorSpec extends TestKit(
       val mapResp = RpcConnectionHandler.state
       expectMsg(
         AirSimMapResponse(mapResp.asScala.toMap)
+      )
+    }
+  }
+
+  "Concurrent AirSimClient" should {
+    "handle queries from multiple senders" in {
+      val testy = system.actorOf(Props(classOf[TestySender], client), "testy")
+      (1 to 100).foreach(i => testy ! s"Test $i")
+
+      client ! AirSimRequest("ping", Array())
+      expectMsg(AirSimBooleanResponse(true))
+    }
+  }
+}
+
+object MsgPackRpcActorSpec {
+  class TestySender(client: ActorRef) extends Actor {
+    implicit val timeout = Timeout(1.second)
+    import context.dispatcher
+
+    override def receive: Receive = {
+      case _ => (client ? AirSimRequest("getServerVersion", Array("Pursuer"))).mapTo[AirSimStringResponse].map(r =>
+        assert(r.result == RpcConnectionHandler.responses("getServerVersion").asInstanceOf[String] )
       )
     }
   }
