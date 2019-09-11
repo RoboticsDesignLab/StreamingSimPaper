@@ -54,7 +54,7 @@ class RpcConnectionHandler extends Actor with ActorLogging {
         decoded(3).asInstanceOf[java.util.ArrayList[Any]]
       )
       val bytes = mapper.writeValueAsBytes(
-        Array[Any](MsgPackRpcActor.RESPONSE, cmd.msgId, RpcConnectionHandler.responses.getOrElse(cmd.command, "Unknown Command!"))
+        Array[Any](MsgPackRpcActor.RESPONSE, cmd.msgId, null, RpcConnectionHandler.responses.getOrElse(cmd.command, "Unknown Command!"))
       )
       val bs = new ByteStringBuilder()
         .putBytes(bytes)

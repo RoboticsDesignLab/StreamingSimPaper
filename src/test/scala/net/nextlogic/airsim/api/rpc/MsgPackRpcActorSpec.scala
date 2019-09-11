@@ -76,7 +76,7 @@ class MsgPackRpcActorSpec extends TestKit(
   "Concurrent AirSimClient" should {
     "handle queries from multiple senders" in {
       val testy = system.actorOf(Props(classOf[TestySender], client), "testy")
-      (1 to 100).foreach(i => testy ! s"Test $i")
+      (1 to 10).foreach(i => testy ! s"Test $i")
 
       client ! AirSimRequest("ping", Array())
       expectMsg(AirSimBooleanResponse(true))

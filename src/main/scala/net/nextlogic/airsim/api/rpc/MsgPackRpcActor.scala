@@ -8,25 +8,24 @@ import akka.io.{IO, Tcp}
 import akka.util.{ByteString, ByteStringBuilder, Timeout}
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.ObjectMapper
-import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimBooleanResponse, AirSimMapResponse, AirSimRequest, AirSimResponseWithMsgId, AirSimStringResponse, RpcConnect}
+import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimBooleanResponse, AirSimErrorResponse, AirSimMapResponse, AirSimNullResponse, AirSimRequest, AirSimResponseWithMsgId, AirSimStringResponse, RpcConnect}
 import org.msgpack.jackson.dataformat.MessagePackFactory
+import org.velvia.MsgPack
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.Random
+
 
 object MsgPackRpcActor {
   def props(remote: InetSocketAddress, listener: ActorRef) =
     Props(new MsgPackRpcActor(remote, listener))
 
-  val mapper = new ObjectMapper(new MessagePackFactory())
-
   val REQUEST = 0
   val RESPONSE = 1
   val NOTIFY = 2
 
-  def pack(a: Array[Any]): Array[Byte] = mapper.writeValueAsBytes(a)
+  def pack(a: Array[Any]): Array[Byte] = MsgPack.pack(a)
 
   def toByteString(bytes: Array[Byte]): ByteString = new ByteStringBuilder()
     .putBytes(bytes)
@@ -41,6 +40,8 @@ object MsgPackRpcActor {
   case class AirSimStringResponse(result: String) extends AirSimResponse
   case class AirSimMapResponse(result: Map[String, Any]) extends AirSimResponse
   case class AirSimIntResponse(result: Int) extends AirSimResponse
+  case class AirSimErrorResponse(error: String) extends AirSimResponse
+  case object AirSimNullResponse extends AirSimResponse
 
   case class AirSimResponseWithMsgId(msgId: Int, response: AirSimResponse)
 }
@@ -52,7 +53,7 @@ class MsgPackRpcActor(remote: InetSocketAddress, listener: ActorRef) extends Act
 
   val r: Random.type = scala.util.Random
   var senders: mutable.Map[Int, ActorRef] = mutable.Map()
-  implicit val timeout = Timeout(1.second)
+  implicit val timeout = Timeout(2.second)
 
   override def receive: Receive = receiveDisconnected()
 
@@ -81,15 +82,15 @@ class MsgPackRpcActor(remote: InetSocketAddress, listener: ActorRef) extends Act
 
   def receiveConnected(connection: ActorRef): Receive = {
     case data: ByteString =>
-      log.info(s"Received data to be written: $data")
+      log.debug(s"Received data to be written: $data")
       connection ! Write(data)
 
     case cmd: AirSimRequest =>
-      log.info(s"Received command: ${cmd.command}")
       val msgid = uniqueMsgId
+      log.debug(s"Received command: ${cmd.command} assigned msgid: ${msgid}")
       senders.update(msgid, sender())
       val message = MsgPackRpcActor.packAndByteString(
-        Array(MsgPackRpcActor.REQUEST, msgid, cmd.command, cmd.args)
+        Array[Any](MsgPackRpcActor.REQUEST, msgid, cmd.command, cmd.args)
       )
 
       connection ! Write(message)
@@ -99,7 +100,7 @@ class MsgPackRpcActor(remote: InetSocketAddress, listener: ActorRef) extends Act
       listener ! "write failed"
 
     case Received(response) =>
-      log.debug(s"Received response from the socket:\n${response.utf8String}")
+      log.debug(s"Received response from the socket: ${response.utf8String}")
       (listener ? response).mapTo[AirSimResponseWithMsgId]
         .map(r =>
           senders.remove(r.msgId)
@@ -135,31 +136,43 @@ class MsgPackRpcActor(remote: InetSocketAddress, listener: ActorRef) extends Act
 
 class AirSimDataHandler extends Actor  with akka.actor.ActorLogging {
   import akka.io.Tcp._
-  val mapper = new ObjectMapper(new MessagePackFactory())
-  mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
+  import org.velvia.msgpack.CollectionCodecs._
+  import org.velvia.msgpack.SimpleCodecs._
+  import org.velvia.msgpack._
+
+//   val intSeqCodec = new SeqCodec[Int]
+   // val anySeqCodec = new SeqCodec[Any]
 
   def receive: Receive = {
     case Received(data) =>
       sender() ! Write(data)
-      log.info(s"Received data in handler: $data")
+      log.debug(s"Received data in handler: $data")
 
     case response: ByteString =>
-      println(s"Received ByteString in handler: ${response.toArray.mkString(", ")}")
+      // println(s"Received ByteString in handler: ${response.toArray.mkString(", ")}")
       val bytes = response.toArray
       // AirSim returns [type, msgID, error, result]
-      val decoded = mapper.readValue(bytes, classOf[Array[Any]])
-      log.debug(s"Decoded response: ${decoded}")
+//      val decoded = mapper.readValue(bytes, classOf[Array[Any]])
+      val decoded = MsgPack.unpack(bytes).asInstanceOf[Seq[Any]]
+      log.debug(s"Decoded response: ${decoded.mkString(", ")}")
       // println(s"Class of result: ${mapAsScalaMap(decoded(3).asInstanceOf[java.util.LinkedHashMap[String, Any]])("kinematics_estimated").toString}")
 
       val msgId = decoded(1).asInstanceOf[Int]
-      val resp = decoded(2) match {
-        case r: Boolean => AirSimBooleanResponse(r)
-        case r: String => AirSimStringResponse(r)
-        case r: java.util.LinkedHashMap[String, Any] => AirSimMapResponse(r.asScala.toMap)
-        case r => AirSimStringResponse(r.toString)
+      val error = decoded(2).asInstanceOf[String]
+      if (error == null) {
+        val resp = decoded(3) match {
+          case r: Boolean => AirSimBooleanResponse(r)
+          case r: String => AirSimStringResponse(r)
+          case r: Map[String, Any] => AirSimMapResponse(r)
+          case null => AirSimNullResponse
+          case r => AirSimStringResponse(r.toString)
+        }
+        sender() ! AirSimResponseWithMsgId(msgId, resp)
+      } else {
+        log.error(error)
+        sender () ! AirSimErrorResponse(error)
       }
 
-      sender() ! AirSimResponseWithMsgId(msgId, resp)
 
     case data: String =>
       // println(s"Received string in handler:\n$data")
