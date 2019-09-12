@@ -20,6 +20,6 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % Test
 
 libraryDependencies += "org.velvia" %% "msgpack4s" % "0.6.0"
 
-libraryDependencies += "org.msgpack" % "msgpack-core" % "0.8.18"
-libraryDependencies += "com.github.stampery" % "msgpack-rpc" % "0.7.1"
-libraryDependencies += "org.msgpack" % "jackson-dataformat-msgpack" % "0.8.18"
+//libraryDependencies += "org.msgpack" % "msgpack-core" % "0.8.18"
+//libraryDependencies += "com.github.stampery" % "msgpack-rpc" % "0.7.1"
+//libraryDependencies += "org.msgpack" % "jackson-dataformat-msgpack" % "0.8.18"

@@ -6,10 +6,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.io.{IO, Tcp}
 import akka.util.{ByteString, ByteStringBuilder, Timeout}
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.ObjectMapper
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimBooleanResponse, AirSimErrorResponse, AirSimMapResponse, AirSimNullResponse, AirSimRequest, AirSimResponseWithMsgId, AirSimStringResponse, RpcConnect}
-import org.msgpack.jackson.dataformat.MessagePackFactory
 import org.velvia.MsgPack
 
 import scala.collection.mutable
