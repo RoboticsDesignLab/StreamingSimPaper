@@ -13,21 +13,21 @@ object HCMertzSolver {
 
     val phi =
       if ((x * x + (y - minR) * (y - minR)) < minR * minR) {
-        System.out.println("EVADER: In left turning circle")
+        // System.out.println("EVADER: In left turning circle")
         relPos.pTheta + Math.atan2(y + minR, x)
       }
       else if ((x * x + (y + minR) * (y + minR)) < minR * minR) {
-        System.out.println("EVADER: In right turning circle")
+        // System.out.println("EVADER: In right turning circle")
         relPos.pTheta + Math.atan2(y - minR, x)
       }
       else if (Math.hypot(x, y) < minR * 2) {
-        println("EVADER: Starting the turn...")
+        // println("EVADER: Starting the turn...")
         relPos.pTheta + Math.atan2(y, x) + Math.PI / 2
       }
       else {
 //        val newTheta = relPos.eTheta + Math.atan2(y, x) + Math.PI
         val newTheta = relPos.pTheta + Math.atan2(y, x)
-        println(s"EVADER:  relPos: ${relPosition} Running away, opp theta ${relPos.pTheta}, minR: $minR, new theta: $newTheta...")
+        // println(s"EVADER:  relPos: ${relPosition} Running away, opp theta ${relPos.pTheta}, minR: $minR, new theta: $newTheta...")
         newTheta
       }
 
