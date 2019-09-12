@@ -33,9 +33,11 @@ object AirsimUtils {
 
   def getPositionBlocking(kinematics: Future[Any]): Vector3r = {
     val r = Await.result(kinematics, timeout.duration).asInstanceOf[AirSimMapResponse]
-    val p = r.result("position").asInstanceOf[Map[String, Float]]
-    // println(p)
+    getPosition(r)
+  }
 
+  def getPosition(r: AirSimMapResponse): Vector3r = {
+    val p = r.result("position").asInstanceOf[Map[String, Float]]
     Vector3r(p("x_val"), p("y_val"), p("z_val"))
   }
 

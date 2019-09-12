@@ -48,7 +48,7 @@ object HCMertzSolver {
     val dtheta = phi * (Constants.pVelocity / Constants.turningRadius)
     val newTheta = relPos.pTheta + dtheta * Constants.timeStepForAngleChange
 
-    println(s"PURUSER: rel position: ${relPosition}, current th: ${relPos.pTheta}, resulting phi: $phi, resulting theta: ${newTheta}")
+    // println(s"PURUSER: rel position: ${relPosition}, current th: ${relPos.pTheta}, resulting phi: $phi, resulting theta: ${newTheta}")
 
     newTheta
   }
