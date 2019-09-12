@@ -71,7 +71,8 @@ object Model02 extends App {
     val ePhi = HCMertzSolver.evade(eRelPos)
 
     steeringDecisions offer SteeringDecision(Constants.e, eRelPos.pRelativePosition, eLocationE,
-      eLocationTimeE, pLocationE, pLocationTimeE, eTheta, pTheta, ePhi, System.currentTimeMillis() - startTime)
+      eLocationTimeE - startTime, pLocationE, pLocationTimeE - startTime,
+      eTheta, pTheta, ePhi, System.currentTimeMillis() - startTime)
 
     eTheta = ePhi
     // moveByVelocity is a non-blocking call and returns after timeout provided
@@ -87,7 +88,8 @@ object Model02 extends App {
     val pPhi = HCMertzSolver.pursue(pRelPos)
 
     steeringDecisions offer SteeringDecision(Constants.p, pRelPos.pRelativePosition, pLocationP,
-      pLocationTimeP, eLocationP, eLocationTimeP, pTheta, eTheta, pPhi, System.currentTimeMillis() - startTime)
+      pLocationTimeP - startTime, eLocationP, eLocationTimeP - startTime,
+      pTheta, eTheta, pPhi, System.currentTimeMillis() - startTime)
 
     pTheta = pPhi
 

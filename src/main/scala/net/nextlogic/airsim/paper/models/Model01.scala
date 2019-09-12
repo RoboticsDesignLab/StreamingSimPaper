@@ -74,9 +74,11 @@ object Model01 extends App {
     val pPhi = HCMertzSolver.pursue(relPos)
 
     steeringDecisions offer SteeringDecision(Constants.e, relPos.pRelativePosition, eLocation,
-      eLocationTime, pLocation, pLocationTime, eTheta, pTheta, ePhi, System.currentTimeMillis() - startTime)
+      eLocationTime - startTime, pLocation, pLocationTime - startTime,
+      eTheta, pTheta, ePhi, System.currentTimeMillis() - startTime)
     steeringDecisions offer SteeringDecision(Constants.p, relPos.pRelativePosition, pLocation,
-      pLocationTime, eLocation, eLocationTime, pTheta, eTheta, pPhi, System.currentTimeMillis() - startTime)
+      pLocationTime - startTime, eLocation, eLocationTime - startTime,
+      pTheta, eTheta, pPhi, System.currentTimeMillis() - startTime)
 
     eTheta = ePhi
     pTheta = pPhi
