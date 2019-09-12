@@ -87,7 +87,7 @@ class MsgPackRpcActor(remote: InetSocketAddress, listener: ActorRef) extends Act
 
     case cmd: AirSimRequest =>
       val msgid = uniqueMsgId
-      log.debug(s"Received command: ${cmd.command} assigned msgid: ${msgid}")
+      log.debug(s"Received command: ${cmd.command} assigned msgid: $msgid (args: ${cmd.args.mkString(", ")})")
       senders.update(msgid, sender())
       val message = MsgPackRpcActor.packAndByteString(
         Array[Any](MsgPackRpcActor.REQUEST, msgid, cmd.command, cmd.args)
@@ -100,7 +100,7 @@ class MsgPackRpcActor(remote: InetSocketAddress, listener: ActorRef) extends Act
       listener ! "write failed"
 
     case Received(response) =>
-      log.debug(s"Received response from the socket: ${response.utf8String}")
+      //log.debug(s"Received response from the socket: ${response.utf8String}")
       (listener ? response).mapTo[AirSimResponseWithMsgId]
         .map(r =>
           senders.remove(r.msgId)
