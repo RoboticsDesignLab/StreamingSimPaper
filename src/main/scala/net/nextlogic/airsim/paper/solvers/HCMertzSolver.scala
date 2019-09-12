@@ -1,11 +1,11 @@
 package net.nextlogic.airsim.paper.solvers
 
 import net.nextlogic.airsim.paper.Constants
-import net.nextlogic.airsim.paper.sensors.location.RelativePosition
+import net.nextlogic.airsim.paper.sensors.location.RelativePositionCalculator
 
 object HCMertzSolver {
 
-  def evade(relPos: RelativePosition): Double = {
+  def evade(relPos: RelativePositionCalculator): Double = {
     val minR = Constants.turningRadius
     val relPosition = relPos.eRelativePosition
     val x = relPosition.x
@@ -25,7 +25,6 @@ object HCMertzSolver {
         relPos.pTheta + Math.atan2(y, x) + Math.PI / 2
       }
       else {
-//        val newTheta = relPos.eTheta + Math.atan2(y, x) + Math.PI
         val newTheta = relPos.pTheta + Math.atan2(y, x)
         // println(s"EVADER:  relPos: ${relPosition} Running away, opp theta ${relPos.pTheta}, minR: $minR, new theta: $newTheta...")
         newTheta
@@ -34,7 +33,7 @@ object HCMertzSolver {
     phi
   }
 
-  def pursue(relPos: RelativePosition): Double = {
+  def pursue(relPos: RelativePositionCalculator): Double = {
     val relPosition = relPos.pRelativePosition
     val x = relPosition.x
     val y = relPosition.y

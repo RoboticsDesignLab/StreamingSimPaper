@@ -13,7 +13,7 @@ import akka.util.Timeout
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimRequest, RpcConnect}
 import net.nextlogic.airsim.api.rpc.{AirSimDataHandler, MsgPackRpcActor}
 import net.nextlogic.airsim.paper.persistence.SteeringDecision
-import net.nextlogic.airsim.paper.sensors.location.RelativePosition
+import net.nextlogic.airsim.paper.sensors.location.RelativePositionCalculator
 import net.nextlogic.airsim.paper.solvers.HCMertzSolver
 import net.nextlogic.airsim.paper.{AirsimUtils, Constants}
 import scala.concurrent.duration._
@@ -66,7 +66,7 @@ object Model02 extends App {
     val eLocationTimeE = System.currentTimeMillis()
     val pLocationE = AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.p)))
     val pLocationTimeE = System.currentTimeMillis()
-    val eRelPos = RelativePosition(eLocationE, eTheta, pLocationE, pTheta)
+    val eRelPos = RelativePositionCalculator(Constants.e, eLocationE, eTheta, pLocationE, pTheta)
 
     val ePhi = HCMertzSolver.evade(eRelPos)
 
@@ -79,16 +79,16 @@ object Model02 extends App {
     // but we don't need to wait for the response - any other move request will interrupt the previous one
     airSimPoolMaster ? AirSimRequest("moveByVelocityZ", AirsimUtils.moveByVelocityZArgs(Constants.e, eTheta, Constants.eVelocity))
 
-    val eLocationP = AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.e)))
-    val eLocationTimeP = System.currentTimeMillis()
-    val pLocationP = AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.p)))
-    val pLocationTimeP = System.currentTimeMillis()
-    val pRelPos = RelativePosition(eLocationP, eTheta, pLocationP, pTheta)
+//    val eLocationP = AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.e)))
+//    val eLocationTimeP = System.currentTimeMillis()
+//    val pLocationP = AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.p)))
+//    val pLocationTimeP = System.currentTimeMillis()
+//    val pRelPos = RelativePositionCalculator(Constants.p, eLocationP, eTheta, pLocationP, pTheta)
 
-    val pPhi = HCMertzSolver.pursue(pRelPos)
+    val pPhi = HCMertzSolver.pursue(eRelPos)
 
-    steeringDecisions offer SteeringDecision(Constants.p, pRelPos.pRelativePosition, pLocationP,
-      pLocationTimeP - startTime, eLocationP, eLocationTimeP - startTime,
+    steeringDecisions offer SteeringDecision(Constants.p, eRelPos.pRelativePosition, pLocationE,
+      pLocationTimeE - startTime, eLocationE, eLocationTimeE - startTime,
       pTheta, eTheta, pPhi, System.currentTimeMillis() - startTime)
 
     pTheta = pPhi
@@ -113,7 +113,7 @@ object Model02 extends App {
     val steeringDecisions = Source.queue[SteeringDecision](100, OverflowStrategy.dropHead)
       .via(Slick.flow(4, p =>
         sqlu"""INSERT INTO steering_decisions (label, run, name, time, rel_pos_x, rel_pos_y, my_pos_x, my_pos_y, my_pos_time, opp_pos_x, opp_pos_y, opp_pos_time, my_theta, opp_theta, phi) VALUES
-                ('Model 02B (calculate and update together)',
+                ('Model 02B (shared relative location)',
                   $run, ${p.name}, ${p.time}, ${p.relativePosition.x}, ${p.relativePosition.y},
                   ${p.myPosition.x}, ${p.myPosition.y}, ${p.myPositionTime},
                   ${p.opponentPosition.x}, ${p.opponentPosition.y}, ${p.oppPositionTime},

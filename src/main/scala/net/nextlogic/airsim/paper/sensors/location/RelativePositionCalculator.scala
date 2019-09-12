@@ -2,7 +2,9 @@ package net.nextlogic.airsim.paper.sensors.location
 
 import net.nextlogic.airsim.paper.Structures.Vector3r
 
-case class RelativePosition(eLocation: Vector3r, eTheta: Double, pLocation: Vector3r, pTheta: Double) {
+case class RelativePosition(relPosition: Vector3r, eTheta: Double, pTheta: Double)
+
+case class RelativePositionCalculator(name: String, eLocation: Vector3r, eTheta: Double, pLocation: Vector3r, pTheta: Double) {
   //def eRelativePosition: Vector3r = relativePosTo2D(eLocation, pLocation, eTheta)
   def eRelativePosition: Vector3r = relativePosTo2D(pLocation, eLocation, pTheta)
   def pRelativePosition: Vector3r = relativePosTo2D(pLocation, eLocation, pTheta)

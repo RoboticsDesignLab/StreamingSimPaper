@@ -2,6 +2,7 @@ package net.nextlogic.airsim.paper.models
 
 import java.net.InetSocketAddress
 import java.sql.Timestamp
+
 import akka.pattern.ask
 import akka.actor.{ActorSystem, Props}
 import akka.routing.{Broadcast, SmallestMailboxPool}
@@ -13,9 +14,10 @@ import akka.util.Timeout
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimRequest, RpcConnect}
 import net.nextlogic.airsim.api.rpc.{AirSimDataHandler, MsgPackRpcActor}
 import net.nextlogic.airsim.paper.persistence.SteeringDecision
-import net.nextlogic.airsim.paper.sensors.location.RelativePosition
+import net.nextlogic.airsim.paper.sensors.location.RelativePositionCalculator
 import net.nextlogic.airsim.paper.solvers.HCMertzSolver
 import net.nextlogic.airsim.paper.{AirsimUtils, Constants}
+
 import scala.concurrent.duration._
 import scala.concurrent.Await
 
@@ -68,7 +70,7 @@ object Model01 extends App {
     val pLocationFuture = airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.p))
     val pLocation = AirsimUtils.getPositionBlocking(pLocationFuture)
     val pLocationTime = System.currentTimeMillis()
-    val relPos = RelativePosition(eLocation, eTheta, pLocation, pTheta)
+    val relPos = RelativePositionCalculator(Constants.e, eLocation, eTheta, pLocation, pTheta)
 
     val ePhi = HCMertzSolver.evade(relPos)
     val pPhi = HCMertzSolver.pursue(relPos)

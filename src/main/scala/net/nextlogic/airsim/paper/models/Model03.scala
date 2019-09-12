@@ -15,7 +15,7 @@ import net.nextlogic.airsim.api.rpc.{AirSimDataHandler, MsgPackRpcActor}
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimRequest, RpcConnect}
 import net.nextlogic.airsim.paper.{AirsimUtils, Constants}
 import net.nextlogic.airsim.paper.persistence.SteeringDecision
-import net.nextlogic.airsim.paper.sensors.location.RelativePosition
+import net.nextlogic.airsim.paper.sensors.location.RelativePositionCalculator
 import net.nextlogic.airsim.paper.solvers.HCMertzSolver
 
 import scala.concurrent.duration._
@@ -69,7 +69,7 @@ object Model03 extends App {
       val eLocationTimeE = System.currentTimeMillis()
       val pLocationE = AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.p)))
       val pLocationTimeE = System.currentTimeMillis()
-      val eRelPos = RelativePosition(eLocationE, eTheta, pLocationE, pTheta)
+      val eRelPos = RelativePositionCalculator(Constants.e, eLocationE, eTheta, pLocationE, pTheta)
 
       val ePhi = HCMertzSolver.evade(eRelPos)
 
@@ -89,7 +89,7 @@ object Model03 extends App {
       val eLocationTimeP = System.currentTimeMillis()
       val pLocationP = AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.p)))
       val pLocationTimeP = System.currentTimeMillis()
-      val pRelPos = RelativePosition(eLocationP, eTheta, pLocationP, pTheta)
+      val pRelPos = RelativePositionCalculator(Constants.p, eLocationP, eTheta, pLocationP, pTheta)
 
       val pPhi = HCMertzSolver.pursue(pRelPos)
 
