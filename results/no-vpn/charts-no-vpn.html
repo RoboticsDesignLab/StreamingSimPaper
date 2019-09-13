@@ -6,31 +6,30 @@
     <script src="https://unpkg.com/frappe-charts@1.1.0"></script>
 </head>
 <body>
-<div id="my_location" style="width: 400px;"></div>
+<div id="my_location" style="width: 600px;"></div>
 <button onclick="chart1.export()">Export Chart 1</button>
-<div id="opp_location" style="width: 400px;"></div>
+<div id="opp_location" style="width: 600px;"></div>
 <button onclick="chart2.export()">Export Chart 2</button>
-<div id="my_move" style="width: 400px;"></div>
+<div id="my_move" style="width: 600px;"></div>
 <button onclick="chart3.export()">Export Chart 3</button>
-<div id="opp_move" style="width: 400px;"></div>
+<div id="opp_move" style="width: 600px;"></div>
 <button onclick="chart4.export()">Export Chart 4</button>
 
 <script>
     let chart1 = new frappe.Chart( "#my_location", { // or DOM element
         data: {
-            labels: ["Model 1", "Model 2", "Model 3", "Model 4",
-                "Model 5"],
+            labels: ["Model 1", "Model 2", "Model 3", "Model 4"],
 
             // yMarkers: [{ label: "ms", value: 70, options: { labelPos: 'left' }}],
 
             datasets: [
                 {
                     name: "Evader", chartType: 'bar',
-                    values: [0, 31.857, 39.806, 0.502, 0]
+                    values: [0, 31.857, 39.806, 0.502]
                 },
                 {
                     name: "Pursuer", chartType: 'bar',
-                    values: [0, 0.197, 0.17, 0.425, 0]
+                    values: [0, 0.197, 0.17, 0.425]
                 }
             ],
 
@@ -38,7 +37,7 @@
 
         title: "My Location Recency (milliseconds)",
         type: 'bar', // or 'bar', 'line', 'pie', 'percentage'
-        height: 300,
+        height: 400,
         colors: ['purple', '#ffa3ef', 'light-blue'],
 
     });
@@ -66,7 +65,7 @@
 
         title: "Opponent's Location Recency (milliseconds)",
         type: 'bar', // or 'bar', 'line', 'pie', 'percentage'
-        height: 300,
+        height: 400,
         colors: ['purple', '#ffa3ef', 'light-blue'],
 
     });
@@ -94,7 +93,7 @@
 
         title: "Time Since My Last Move (milliseconds)",
         type: 'bar', // or 'bar', 'line', 'pie', 'percentage'
-        height: 300,
+        height: 400,
         colors: ['purple', '#ffa3ef', 'light-blue'],
 
     });
@@ -122,7 +121,7 @@
 
         title: "Time Since Opponent's Last Move (milliseconds)",
         type: 'bar', // or 'bar', 'line', 'pie', 'percentage'
-        height: 300,
+        height: 400,
         colors: ['purple', '#ffa3ef', 'light-blue'],
 
     });
