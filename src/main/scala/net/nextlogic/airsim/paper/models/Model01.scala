@@ -59,7 +59,7 @@ object Model01 extends App {
 
   val startTime = System.currentTimeMillis()
 
-  (1 to 300).foreach{i =>
+  (1 to 600).foreach{i =>
     val eLocationFuture = airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.e))
     val eLocation = AirsimUtils.getPositionBlocking(eLocationFuture)
     val eLocationTime = System.currentTimeMillis()
