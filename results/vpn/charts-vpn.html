@@ -7,10 +7,14 @@
 </head>
 <body>
 <div id="my_location" style="width: 400px;"></div>
-<br/>
+<button onclick="chart1.export()">Export Chart 1</button>
 <div id="opp_location" style="width: 400px;"></div>
+<button onclick="chart2.export()">Export Chart 2</button>
 <div id="my_move" style="width: 400px;"></div>
+<button onclick="chart3.export()">Export Chart 3</button>
 <div id="opp_move" style="width: 400px;"></div>
+<button onclick="chart4.export()">Export Chart 4</button>
+
 <script>
     let chart1 = new frappe.Chart( "#my_location", { // or DOM element
         data: {
