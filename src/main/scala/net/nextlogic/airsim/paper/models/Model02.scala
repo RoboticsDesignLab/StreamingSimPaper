@@ -2,6 +2,7 @@ package net.nextlogic.airsim.paper.models
 
 import java.net.InetSocketAddress
 import java.sql.Timestamp
+
 import akka.pattern.ask
 import akka.actor.{ActorSystem, Props}
 import akka.routing.{Broadcast, SmallestMailboxPool}
@@ -12,10 +13,12 @@ import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.util.Timeout
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimRequest, RpcConnect}
 import net.nextlogic.airsim.api.rpc.{AirSimDataHandler, MsgPackRpcActor}
+import net.nextlogic.airsim.paper.StreamUtils.setUpAndConnectAirSim
 import net.nextlogic.airsim.paper.persistence.SteeringDecision
 import net.nextlogic.airsim.paper.sensors.location.RelativePositionCalculator
 import net.nextlogic.airsim.paper.solvers.HCMertzSolver
 import net.nextlogic.airsim.paper.{AirsimUtils, Constants}
+
 import scala.concurrent.duration._
 import scala.concurrent.Await
 
@@ -30,12 +33,7 @@ object Model02 extends App {
   system.registerOnTermination(() => session.close())
   import session.profile.api._
 
-  val airSimPoolMaster = system.actorOf(SmallestMailboxPool(5).props(
-    MsgPackRpcActor.props(
-      new InetSocketAddress(Constants.ip, Constants.port), system.actorOf(Props[AirSimDataHandler]))
-  ), "airSimClientPool"
-  )
-  airSimPoolMaster ! Broadcast(RpcConnect) //("35.244.124.148", 41451)
+  val airSimPoolMaster = setUpAndConnectAirSim(system)
   Thread.sleep(1000)
 
   val steeringDecisions = setupPersistenceFlow()
@@ -70,7 +68,7 @@ object Model02 extends App {
 
     val ePhi = HCMertzSolver.evade(eRelPos)
 
-    steeringDecisions offer SteeringDecision(Constants.e, eRelPos.pRelativePosition, eLocationE,
+    steeringDecisions offer SteeringDecision(Constants.e, eRelPos.relativePosition, eLocationE,
       eLocationTimeE - startTime, pLocationE, pLocationTimeE - startTime,
       eTheta, pTheta, ePhi, System.currentTimeMillis() - startTime)
 
@@ -87,7 +85,7 @@ object Model02 extends App {
 
     val pPhi = HCMertzSolver.pursue(eRelPos)
 
-    steeringDecisions offer SteeringDecision(Constants.p, eRelPos.pRelativePosition, pLocationE,
+    steeringDecisions offer SteeringDecision(Constants.p, eRelPos.relativePosition, pLocationE,
       pLocationTimeE - startTime, eLocationE, eLocationTimeE - startTime,
       pTheta, eTheta, pPhi, System.currentTimeMillis() - startTime)
 
@@ -102,9 +100,9 @@ object Model02 extends App {
 
   }
 
-  airSimPoolMaster ? AirSimRequest("reset", Array())
+  (airSimPoolMaster ? AirSimRequest("reset", Array())).foreach(_ => airSimPoolMaster ! akka.routing.Broadcast("close"))
 
-  system.scheduler.scheduleOnce(100.millis){
+  system.scheduler.scheduleOnce(500.millis){
     Await.result(system.terminate(), 1.second)
     System.exit(1)
   }

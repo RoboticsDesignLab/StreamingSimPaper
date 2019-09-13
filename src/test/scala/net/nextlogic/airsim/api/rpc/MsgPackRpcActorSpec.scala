@@ -6,14 +6,9 @@ import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{EventFilter, ImplicitSender, TestKit}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.typesafe.config.ConfigFactory
-import net.nextlogic.airsim.api.AirSimClientActor
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimBooleanResponse, AirSimMapResponse, AirSimRequest, AirSimStringResponse, RpcConnect}
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActorSpec.TestySender
-import net.nextlogic.rpc.Server.system
-import net.nextlogic.rpc.TCPConnectionManager
-import org.msgpack.jackson.dataformat.MessagePackFactory
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 
 import scala.concurrent.duration._
@@ -31,8 +26,6 @@ class MsgPackRpcActorSpec extends TestKit(
   val handler = system.actorOf(Props[AirSimDataHandler], "handler")
   val client = system.actorOf(MsgPackRpcActor.props(new InetSocketAddress("127.0.0.1", 10000), handler), "client")
   client ! RpcConnect
-
-  val mapper = new ObjectMapper(new MessagePackFactory())
 
   override def beforeAll(): Unit = {
 

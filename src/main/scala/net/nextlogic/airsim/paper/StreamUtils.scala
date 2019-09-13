@@ -12,7 +12,7 @@ import akka.util.Timeout
 import net.nextlogic.airsim.api.rpc.{AirSimDataHandler, MsgPackRpcActor}
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimMapResponse, AirSimRequest, RpcConnect}
 import net.nextlogic.airsim.paper.sensors.location.RelativePositionActor.{LocationUpdate, ThetaUpdate}
-import net.nextlogic.airsim.paper.sensors.location.RelativePositionCalculator
+import net.nextlogic.airsim.paper.sensors.location.{RelativePositionCalculator, RelPosCalculatorWithPhi}
 import net.nextlogic.airsim.paper.solvers.HCMertzSolver
 
 import scala.concurrent.duration._
@@ -48,7 +48,7 @@ object StreamUtils {
   def locationFlow(name: String, airSimPoolMaster: ActorRef): Flow[String, LocationUpdate, NotUsed] =
     Flow[String]
       .map(name => AirSimRequest("simGetGroundTruthKinematics", Array(name)))
-      .ask[AirSimMapResponse](airSimPoolMaster)
+      .ask[AirSimMapResponse](parallelism = 4)(airSimPoolMaster)
       .map(AirsimUtils.getPosition)
       .map(p => LocationUpdate(name, p))
 
@@ -56,27 +56,28 @@ object StreamUtils {
     Flow[LocationUpdate]
       .ask[RelativePositionCalculator](relPositionActor)
 
-  def calculateEvadePhiFlow: Flow[RelativePositionCalculator, Double, NotUsed] =
+  def calculateEvadePhiFlow: Flow[RelativePositionCalculator, RelPosCalculatorWithPhi, NotUsed] =
     Flow[RelativePositionCalculator]
-      .map(HCMertzSolver.evade)
+      .map(rc => RelPosCalculatorWithPhi(rc, HCMertzSolver.evade(rc)))
 
-  def calculatePursuePhiFlow: Flow[RelativePositionCalculator, Double, NotUsed] =
+  def calculatePursuePhiFlow: Flow[RelativePositionCalculator, RelPosCalculatorWithPhi, NotUsed] =
     Flow[RelativePositionCalculator]
-      .map(HCMertzSolver.pursue)
+      .map(rc => RelPosCalculatorWithPhi(rc, HCMertzSolver.pursue(rc)))
 
-  def evadeAirSim(airSimPoolMaster: ActorRef): Sink[Double, NotUsed] =
-    Flow[Double]
-      .map(phi => AirSimRequest("moveByVelocityZ", AirsimUtils.moveByVelocityZArgs(Constants.e, phi, Constants.eVelocity)))
+  def evadeAirSim(airSimPoolMaster: ActorRef): Sink[RelPosCalculatorWithPhi, NotUsed] =
+    Flow[RelPosCalculatorWithPhi]
+      .map(rcPhi => AirSimRequest("moveByVelocityZ", AirsimUtils.moveByVelocityZArgs(Constants.e, rcPhi.phi, Constants.eVelocity)))
       .to(Sink.foreach[AirSimRequest](r => airSimPoolMaster ? r))
 
-  def pursueAirSim(airSimPoolMaster: ActorRef): Sink[Double, NotUsed] =
-    Flow[Double]
-      .map(phi => AirSimRequest("moveByVelocityZ", AirsimUtils.moveByVelocityZArgs(Constants.p, phi, Constants.pVelocity)))
+  def pursueAirSim(airSimPoolMaster: ActorRef): Sink[RelPosCalculatorWithPhi, NotUsed] =
+    Flow[RelPosCalculatorWithPhi]
+      .map(rcPhi => AirSimRequest("moveByVelocityZ", AirsimUtils.moveByVelocityZArgs(Constants.p, rcPhi.phi, Constants.pVelocity)))
       .to(Sink.foreach[AirSimRequest](r => airSimPoolMaster ? r))
 
-  def updateTheta(name: String, relPositionActor: ActorRef): Sink[Double, NotUsed] = Flow[Double]
-    .map(phi => ThetaUpdate(name, phi))
-    .to(Sink.foreach[ThetaUpdate](tu => relPositionActor ? tu))
+  def updateTheta(name: String, relPositionActor: ActorRef): Sink[RelPosCalculatorWithPhi, NotUsed] =
+    Flow[RelPosCalculatorWithPhi]
+      .map(rcPhi => ThetaUpdate(name, rcPhi.phi))
+      .to(Sink.foreach[ThetaUpdate](tu => relPositionActor ? tu))
 
   def streamLogger[A]: Flow[A, A, NotUsed] = Flow[A]
     .addAttributes(

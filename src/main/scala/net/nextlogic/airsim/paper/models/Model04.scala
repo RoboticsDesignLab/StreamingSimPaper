@@ -18,7 +18,7 @@ import net.nextlogic.airsim.paper.Structures.Vector3r
 import net.nextlogic.airsim.paper.{AirsimUtils, Constants}
 import net.nextlogic.airsim.paper.persistence.SteeringDecision
 import net.nextlogic.airsim.paper.sensors.location.RelativePositionActor.{LocationUpdate, ThetaUpdate}
-import net.nextlogic.airsim.paper.sensors.location.{RelativePosition, RelativePositionActor, RelativePositionCalculator}
+import net.nextlogic.airsim.paper.sensors.location.{RelPosCalculatorWithPhi, RelativePosition, RelativePositionActor, RelativePositionCalculator}
 import net.nextlogic.airsim.paper.solvers.HCMertzSolver
 import net.nextlogic.airsim.paper.StreamUtils._
 
@@ -68,41 +68,33 @@ object Model04 extends App {
 
   val startTime = System.currentTimeMillis()
 
-  val fanOutSource = GraphDSL.create() { implicit builder =>
-    import GraphDSL.Implicits._
-
-    val broadcast = builder.add(Broadcast[LocationUpdate](outputPorts = 2))
-
-    new FanOutShape2(broadcast.in, broadcast.out(0), broadcast.out(1))
-  }
-
-
-  val eLocationsE = locationsSource(Constants.e, airSimPoolMaster, 0.millis, 100.millis).via(streamLogger[LocationUpdate])
+  val eLocationsE = locationsSource(Constants.e, airSimPoolMaster, 0.millis, 100.millis)
+    .via(streamLogger[LocationUpdate])
     .runWith(BroadcastHub.sink[LocationUpdate])
     .map(f => f)
-  val pLocationsE = locationsSource(Constants.p, airSimPoolMaster, 0.millis, 100.millis).via(streamLogger[LocationUpdate])
+  val pLocationsE = locationsSource(Constants.p, airSimPoolMaster, 0.millis, 100.millis)
+    .via(streamLogger[LocationUpdate])
     .runWith(BroadcastHub.sink[LocationUpdate])
     .map(f => f)
 
-  def eSaveSD: Flow[RelativePositionCalculator, RelativePositionCalculator, NotUsed] = Flow[RelativePositionCalculator]
-    .map{r =>
+  val eSaveSD =
+    Sink.foreach[RelPosCalculatorWithPhi](r =>
       steeringDecisions offer SteeringDecision(
-        Constants.e, r.pRelativePosition, r.eLocation,
-        System.currentTimeMillis() - startTime, r.pLocation, System.currentTimeMillis() - startTime,
-        r.eTheta, r.pTheta, HCMertzSolver.evade(r), System.currentTimeMillis() - startTime
+        Constants.e, r.calc.relativePosition, r.calc.eLocation, r.calc.eLocationTime - startTime,
+        r.calc.pLocation, r.calc.pLocationTime - startTime,
+        r.calc.eTheta, r.calc.pTheta, r.phi,
+        System.currentTimeMillis() - startTime
       )
-      r
-    }
+    )
 
-  def pSaveSD: Flow[RelativePositionCalculator, RelativePositionCalculator, NotUsed] = Flow[RelativePositionCalculator]
-    .map{r =>
+  val pSaveSD = Sink.foreach[RelPosCalculatorWithPhi](r =>
       steeringDecisions offer SteeringDecision(
-        Constants.p, r.pRelativePosition, r.pLocation,
-        System.currentTimeMillis() - startTime, r.eLocation, System.currentTimeMillis() - startTime,
-        r.pTheta, r.eTheta, HCMertzSolver.pursue(r), System.currentTimeMillis() - startTime
+        Constants.p, r.calc.relativePosition, r.calc.pLocation, r.calc.pLocationTime - startTime,
+        r.calc.eLocation, r.calc.eLocationTime - startTime,
+        r.calc.pTheta, r.calc.eTheta, r.phi,
+        System.currentTimeMillis() - startTime
       )
-      r
-    }
+  )
 
   val graph = RunnableGraph.fromGraph(
     GraphDSL.create(){implicit builder =>
@@ -110,21 +102,21 @@ object Model04 extends App {
 
       val merge = builder.add(Merge[LocationUpdate](2))
       val broadcastRelDistance = builder.add(Broadcast[RelativePositionCalculator](outputPorts = 2))
-      val eBroadcast = builder.add(Broadcast[Double](outputPorts = 2))
-      val pBroadcast = builder.add(Broadcast[Double](outputPorts = 2))
+      val eBroadcast = builder.add(Broadcast[RelPosCalculatorWithPhi](outputPorts = 3))
+      val pBroadcast = builder.add(Broadcast[RelPosCalculatorWithPhi](outputPorts = 3))
       val eFilter = builder.add(Flow[RelativePositionCalculator].filter(_.name == Constants.e))
       val pFilter = builder.add(Flow[RelativePositionCalculator].filter(_.name == Constants.p))
 
       eLocationsE ~> merge
       pLocationsE ~> merge
 
-      merge ~> relativeDistanceFlow(eRelPositionActor) ~> broadcastRelDistance ~> eFilter ~> eSaveSD ~> calculateEvadePhiFlow ~> eBroadcast
-                                                          broadcastRelDistance ~> pFilter ~> pSaveSD ~> calculatePursuePhiFlow ~> pBroadcast
-      eBroadcast.out(0) ~> evadeAirSim(airSimPoolMaster)
-      eBroadcast.out(1) ~> updateTheta(Constants.e, eRelPositionActor)
-      pBroadcast.out(0) ~> pursueAirSim(airSimPoolMaster)
-      pBroadcast.out(1) ~> updateTheta(Constants.p, eRelPositionActor)
-
+      merge ~> relativeDistanceFlow(eRelPositionActor) ~>
+        broadcastRelDistance ~> eFilter ~> calculateEvadePhiFlow ~> eBroadcast ~> evadeAirSim(airSimPoolMaster)
+                                                                    eBroadcast ~> updateTheta(Constants.e, eRelPositionActor)
+                                                                    eBroadcast ~> eSaveSD
+        broadcastRelDistance ~> pFilter ~> calculatePursuePhiFlow ~> pBroadcast ~> pursueAirSim(airSimPoolMaster)
+                                                                     pBroadcast ~> updateTheta(Constants.p, eRelPositionActor)
+                                                                     pBroadcast ~> pSaveSD
       ClosedShape
     }
   )
@@ -133,9 +125,9 @@ object Model04 extends App {
   system.scheduler.scheduleOnce(30.seconds) {
     sharedKillSwitch.shutdown()
 
-    airSimPoolMaster ? AirSimRequest("reset", Array())
+    (airSimPoolMaster ? AirSimRequest("reset", Array())).foreach(_ => airSimPoolMaster ! akka.routing.Broadcast("close"))
 
-    system.scheduler.scheduleOnce(100.millis){
+    system.scheduler.scheduleOnce(500.millis){
       Await.result(system.terminate(), 1.second)
       System.exit(1)
     }

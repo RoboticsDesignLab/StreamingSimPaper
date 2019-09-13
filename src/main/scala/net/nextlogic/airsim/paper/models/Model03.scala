@@ -13,6 +13,7 @@ import akka.stream.scaladsl.{Sink, Source, SourceQueueWithComplete}
 import akka.util.Timeout
 import net.nextlogic.airsim.api.rpc.{AirSimDataHandler, MsgPackRpcActor}
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimRequest, RpcConnect}
+import net.nextlogic.airsim.paper.StreamUtils.setUpAndConnectAirSim
 import net.nextlogic.airsim.paper.{AirsimUtils, Constants}
 import net.nextlogic.airsim.paper.persistence.SteeringDecision
 import net.nextlogic.airsim.paper.sensors.location.RelativePositionCalculator
@@ -32,12 +33,7 @@ object Model03 extends App {
   system.registerOnTermination(() => session.close())
   import session.profile.api._
 
-  val airSimPoolMaster = system.actorOf(SmallestMailboxPool(5).props(
-    MsgPackRpcActor.props(
-      new InetSocketAddress(Constants.ip, Constants.port), system.actorOf(Props[AirSimDataHandler]))
-  ), "airSimClientPool"
-  )
-  airSimPoolMaster ! Broadcast(RpcConnect) //("35.244.124.148", 41451)
+  val airSimPoolMaster = setUpAndConnectAirSim(system)
   Thread.sleep(1000)
 
   val steeringDecisions = setupPersistenceFlow()
@@ -73,7 +69,7 @@ object Model03 extends App {
 
       val ePhi = HCMertzSolver.evade(eRelPos)
 
-      steeringDecisions offer SteeringDecision(Constants.e, eRelPos.pRelativePosition, eLocationE,
+      steeringDecisions offer SteeringDecision(Constants.e, eRelPos.relativePosition, eLocationE,
         eLocationTimeE - startTime, pLocationE, pLocationTimeE - startTime,
         eTheta, pTheta, ePhi, System.currentTimeMillis() - startTime)
 
@@ -93,7 +89,7 @@ object Model03 extends App {
 
       val pPhi = HCMertzSolver.pursue(pRelPos)
 
-      steeringDecisions offer SteeringDecision(Constants.p, pRelPos.pRelativePosition, pLocationP,
+      steeringDecisions offer SteeringDecision(Constants.p, pRelPos.relativePosition, pLocationP,
         pLocationTimeP - startTime, eLocationP, eLocationTimeP - startTime,
         pTheta, eTheta, pPhi, System.currentTimeMillis() - startTime)
 
@@ -107,9 +103,9 @@ object Model03 extends App {
     Thread.sleep(Constants.stepLength)
   }
 
-  airSimPoolMaster ? AirSimRequest("reset", Array())
+  (airSimPoolMaster ? AirSimRequest("reset", Array())).foreach(_ => airSimPoolMaster ! akka.routing.Broadcast("close"))
 
-  system.scheduler.scheduleOnce(100.millis){
+  system.scheduler.scheduleOnce(500.millis){
     Await.result(system.terminate(), 1.second)
     System.exit(1)
   }

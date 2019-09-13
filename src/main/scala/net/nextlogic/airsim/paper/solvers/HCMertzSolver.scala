@@ -7,7 +7,7 @@ object HCMertzSolver {
 
   def evade(relPos: RelativePositionCalculator): Double = {
     val minR = Constants.turningRadius
-    val relPosition = relPos.eRelativePosition
+    val relPosition = relPos.relativePosition
     val x = relPosition.x
     val y = relPosition.y
 
@@ -34,7 +34,7 @@ object HCMertzSolver {
   }
 
   def pursue(relPos: RelativePositionCalculator): Double = {
-    val relPosition = relPos.pRelativePosition
+    val relPosition = relPos.relativePosition
     val x = relPosition.x
     val y = relPosition.y
 

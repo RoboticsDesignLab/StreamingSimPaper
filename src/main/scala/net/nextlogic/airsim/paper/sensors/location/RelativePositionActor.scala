@@ -15,17 +15,21 @@ object RelativePositionActor {
 
 class RelativePositionActor extends Actor with ActorLogging {
   var locs: mutable.Map[String, Vector3r] = mutable.Map[String, Vector3r]()
+  var locUpdates: mutable.Map[String, Long] = mutable.Map[String, Long]()
   var thetas: mutable.Map[String, Double] = mutable.Map[String, Double]()
 
   override def receive: Receive = {
     case LocationUpdate(name, loc) =>
       log.debug(s"Received loc update: $name: $loc")
       locs.update(name, loc)
+      val time = System.currentTimeMillis()
+      locUpdates.update(name, time)
 
       val relativePosition = RelativePositionCalculator(
         name,
         locs.getOrElse(Constants.e, Vector3r()), thetas.getOrElse(Constants.e, 0.0),
-        locs.getOrElse(Constants.p, Vector3r()), thetas.getOrElse(Constants.p, 0.0)
+        locs.getOrElse(Constants.p, Vector3r()), thetas.getOrElse(Constants.p, 0.0),
+        locUpdates.getOrElse(Constants.e, time), locUpdates.getOrElse(Constants.p, time )
       )
       // val rp = relativePosition.relativePositionWithThetas
       // log.debug(s"Rel distances: $rp")
