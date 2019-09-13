@@ -3,7 +3,8 @@ package net.nextlogic.airsim.paper
 import net.nextlogic.airsim.paper.Structures.Vector3r
 
 object Constants {
-  val ip = "35.244.124.148"
+  val ip = "35.201.30.112"
+//  val ip = "10.10.0.82"
   val port = 41451
   val e = "Evader"
   val p = "Pursuer"

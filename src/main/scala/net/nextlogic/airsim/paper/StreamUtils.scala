@@ -18,7 +18,7 @@ import net.nextlogic.airsim.paper.solvers.HCMertzSolver
 import scala.concurrent.duration._
 
 object StreamUtils {
-  implicit val timeout = Timeout(50.millis)
+  implicit val timeout = Timeout(500.millis)
 
   val sharedKillSwitch: SharedKillSwitch = KillSwitches.shared("stopAll")
 

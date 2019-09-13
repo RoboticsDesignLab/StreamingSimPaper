@@ -104,6 +104,7 @@ object Model04 extends App {
       val broadcastRelDistance = builder.add(Broadcast[RelativePositionCalculator](outputPorts = 2))
       val eBroadcast = builder.add(Broadcast[RelPosCalculatorWithPhi](outputPorts = 3))
       val pBroadcast = builder.add(Broadcast[RelPosCalculatorWithPhi](outputPorts = 3))
+      // unfiltered model overloads the AirSim when run without VPN
       val eFilter = builder.add(Flow[RelativePositionCalculator].filter(_.name == Constants.e))
       val pFilter = builder.add(Flow[RelativePositionCalculator].filter(_.name == Constants.p))
 
@@ -113,7 +114,7 @@ object Model04 extends App {
       merge ~> relativeDistanceFlow(eRelPositionActor) ~>
         broadcastRelDistance ~> eFilter ~> calculateEvadePhiFlow ~> eBroadcast ~> evadeAirSim(airSimPoolMaster)
                                                                     eBroadcast ~> updateTheta(Constants.e, eRelPositionActor)
-                                                                    eBroadcast ~> eSaveSD
+                                                                    eBroadcast  ~> eSaveSD
         broadcastRelDistance ~> pFilter ~> calculatePursuePhiFlow ~> pBroadcast ~> pursueAirSim(airSimPoolMaster)
                                                                      pBroadcast ~> updateTheta(Constants.p, eRelPositionActor)
                                                                      pBroadcast ~> pSaveSD
@@ -137,7 +138,7 @@ object Model04 extends App {
     val steeringDecisions = Source.queue[SteeringDecision](100, OverflowStrategy.dropHead)
       .via(Slick.flow(4, p =>
         sqlu"""INSERT INTO steering_decisions (label, run, name, time, rel_pos_x, rel_pos_y, my_pos_x, my_pos_y, my_pos_time, opp_pos_x, opp_pos_y, opp_pos_time, my_theta, opp_theta, phi) VALUES
-                ('Model 04',
+                ('Model 04B',
                   $run, ${p.name}, ${p.time}, ${p.relativePosition.x}, ${p.relativePosition.y},
                   ${p.myPosition.x}, ${p.myPosition.y}, ${p.myPositionTime},
                   ${p.opponentPosition.x}, ${p.opponentPosition.y}, ${p.oppPositionTime},
