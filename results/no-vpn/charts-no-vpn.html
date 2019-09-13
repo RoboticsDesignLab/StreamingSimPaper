@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Charts No VPN</title>
+    <script src="https://unpkg.com/frappe-charts@1.1.0"></script>
+</head>
+<body>
+<div id="my_location" style="width: 600px;"></div>
+<button onclick="chart1.export()">Export Chart 1</button>
+<div id="opp_location" style="width: 600px;"></div>
+<button onclick="chart2.export()">Export Chart 2</button>
+<div id="my_move" style="width: 600px;"></div>
+<button onclick="chart3.export()">Export Chart 3</button>
+<div id="opp_move" style="width: 600px;"></div>
+<button onclick="chart4.export()">Export Chart 4</button>
+
+<script>
+    let chart1 = new frappe.Chart( "#my_location", { // or DOM element
+        data: {
+            labels: ["Model 1", "Model 2", "Model 3", "Model 4"],
+
+            // yMarkers: [{ label: "ms", value: 70, options: { labelPos: 'left' }}],
+
+            datasets: [
+                {
+                    name: "Evader", chartType: 'bar',
+                    values: [0, 31.857, 39.806, 0.502]
+                },
+                {
+                    name: "Pursuer", chartType: 'bar',
+                    values: [0, 0.197, 0.17, 0.425]
+                }
+            ],
+
+        },
+
+        title: "My Location Recency (milliseconds)",
+        type: 'bar', // or 'bar', 'line', 'pie', 'percentage'
+        height: 400,
+        colors: ['purple', '#ffa3ef', 'light-blue'],
+
+    });
+</script>
+<script>
+    let chart2 = new frappe.Chart( "#opp_location", { // or DOM element
+        data: {
+            labels: ["Model 1", "Model 2", "Model 3", "Model 4",
+                "Model 5"],
+
+            // yMarkers: [{ label: "ms", value: 70, options: { labelPos: 'left' }}],
+
+            datasets: [
+                {
+                    name: "Evader", chartType: 'bar',
+                    values: [0, 0.037, 0.044, 55.010, 0]
+                },
+                {
+                    name: "Pursuer", chartType: 'bar',
+                    values: [0, 32.017, 40.116, 56.462, 0]
+                }
+            ],
+
+        },
+
+        title: "Opponent's Location Recency (milliseconds)",
+        type: 'bar', // or 'bar', 'line', 'pie', 'percentage'
+        height: 400,
+        colors: ['purple', '#ffa3ef', 'light-blue'],
+
+    });
+</script>
+<script>
+    let chart3 = new frappe.Chart( "#my_move", { // or DOM element
+        data: {
+            labels: ["Model 1", "Model 2", "Model 3", "Model 4",
+                "Model 5"],
+
+            // yMarkers: [{ label: "ms", value: 70, options: { labelPos: 'left' }}],
+
+            datasets: [
+                {
+                    name: "Evader", chartType: 'bar',
+                    values: [100, 167.716, 136.721, 100.631, 0]
+                },
+                {
+                    name: "Pursuer", chartType: 'bar',
+                    values: [100, 167.699, 132.978, 99.930, 0]
+                }
+            ],
+
+        },
+
+        title: "Time Since My Last Move (milliseconds)",
+        type: 'bar', // or 'bar', 'line', 'pie', 'percentage'
+        height: 400,
+        colors: ['purple', '#ffa3ef', 'light-blue'],
+
+    });
+</script>
+<script>
+    let chart4 = new frappe.Chart( "#opp_move", { // or DOM element
+        data: {
+            labels: ["Model 1", "Model 2", "Model 3", "Model 4",
+                "Model 5"],
+
+            // yMarkers: [{ label: "ms", value: 70, options: { labelPos: 'left' }}],
+
+            datasets: [
+                {
+                    name: "Evader", chartType: 'bar',
+                    values: [100, 167.555, 81.350, 56.358, 0]
+                },
+                {
+                    name: "Pursuer", chartType: 'bar',
+                    values: [100, 143.213, 88.137, 58.813, 0]
+                }
+            ],
+
+        },
+
+        title: "Time Since Opponent's Last Move (milliseconds)",
+        type: 'bar', // or 'bar', 'line', 'pie', 'percentage'
+        height: 400,
+        colors: ['purple', '#ffa3ef', 'light-blue'],
+
+    });
+</script>
+
+</body>
+</html>
