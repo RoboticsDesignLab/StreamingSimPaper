@@ -130,10 +130,6 @@ Figure \ref{fig:after-kafka} shows how such communication works. The raw (or pre
 
 \section{Implementation}
 
-Each simulation runs within its own parent actor \verb|SimulationRunnerActor|. Based on the settings provided, this actor sets up all the auxiliary services (e.g. time keeper, visualizer, capture detector) as child actors. It also sets up an Akka Stream for each agent and each tracked sensor and location updates. The simulation is terminated either by the \verb|TimeKeeperActor| when the time has completed or if some termination event is detected (e.g. capture detected by \verb|CaptureDetectorActor|). At this point a kill switch is activated on the streams and the \verb|SimulationRunnerActor| receives a poison pill which stops all the child actors and shuts down the simulation.
-
-Running the entire simulation within the context of a single parent actor allows multiple simulations to run in parallel.
-
 \subsection{Communication with AirSim}
 
 AirSim uses MessagePack \cite{messagepack} for communication. Some of the methods calls are non-blocking (e.g. methods for controlling the vehicles such as \verb|moveByVelocityZ|), however, methods returning vehicle's state, camera feed, LIDAR feed are blocking. The return time of the blocking methods is especially important when using a cloud GPU to run AirSim. Depending on the network connection and type (e.g. VPN), the latency of \verb|getMultirotorState| (a method that returns position, orientation, velocity and acceleration of the vehicle) can be as high as 100ms.
@@ -183,35 +179,26 @@ Implementation using Kafka is somewhat similar to the above solution but instead
 \end{figure}
 
 
-\subsection{Persistence}
-
-The main body of the text immediately follows the abstract. 
-Use 10-point type in a clear, readable font with 1-point leading (10 on
-11).  For reasons of uniformity, use Computer Modern font if possible.  If
-Computer Modern is unavailable, Times Roman is preferred.
-
-Indent when starting a new paragraph, except after major headings.
-
 \section{Experiment}
-The same algorithm was tested in 5 different setups - sequential model with simulator paused for calculations and communication (this represents the ground truth), sequential model with simulator running through out, partially parallelized model using futures to encapsulate communication/calculations for each agent at every time step, fully parallelized model using Akka Streams and finally fully parallelized model using Akka Streams together with Kafka message broker and calculations run on a different machine. 
+The same algorithm was tested in 4 different setups - sequential model with simulator paused for calculations and communication (this represents the ground truth), sequential model with simulator running through out, partially parallelized model using futures to encapsulate communication/calculations for each agent at every time step, fully parallelized model using Akka Streams. Each model was run under 2 different network setups. \footnote{The simulator is running on a GPU on GCP (Google Cloud Platform) located in Sydney (zone australia-southeast1) while the solver was located in Brisbane (about 1000km away).} The first set of experiments was using a direct internet connection which provides stable average latency of 30ms \footnote{Maximum latency of 35ms}. The second set was run over VPN with average latency of 70ms, fluctuating between 30ms and 120ms.
 
-A fixed algorithm was chosen as a policy to avoid side-effects that could be introduced by stochastic nature of RL training \emph{this could back-fire by leading back to the magic RL that can compensate for everything}. The algorithm was originally created for simulation of the differential games \cite{anne-paper}. The pursuer is faster, moving with velocity of 10m/s, but has a larger turning radius of 8m. The evader is slower at velocity of 5m/s, but is more agile and can make turns of any angle. The algorithm only requires position of both players and their headings\footnote{The location data for each player could be shared between players to save the round trip, however, we are simulating behavior of independent actors.}, however, additional call to read the LIDAR data was added to approximate the effects of multiple sensor readings per agent.
+A fixed algorithm was chosen as a policy to avoid side-effects that could be introduced by stochastic nature of RL training \emph{this could back-fire by leading back to the magic RL that can compensate for everything}. The algorithm was originally created for simulation of the differential games \cite{anne-paper}. The pursuer is faster, moving with velocity of 10m/s, but has a larger turning radius of 8m. The evader is slower at velocity of 5m/s, but is more agile and can make turns of any angle. The algorithm only requires position of both players and their headings\footnote{The location data for each player is shared in every implementation to reduce the number of requests because high number of concurrent requests tends to overload AirSim.}. 
 
-Five observations were measured: recency of location data of the player and opponent, time since the last move by the player and opponent and error of the steering angle $\theta$ resulting from stale location data. Because the errors are compounding, the final trajectory is also compared with the ground truth.
+Four observations were measured: recency of location data of the player and opponent and time since the last move by the player and opponent.
 
 \subsection{Sequential model with simulator paused between turns}
 This represents the ground truth as the paused simulator serves as a synchronization layer that shields the algorithm from both stale data and delays in actions. The simulator starts paused. The measurements are taken, and the actions calculated and sent to the agents. After that, the simulator is run for 100ms. Then the process repeats. Because the communication with the simulator happens in the paused state it can be done in a blocking manner and the calculations start only once all the requests have finished.
 
 \subsection{Sequential model with simulator running}
-This is the same as the previous model, but without the paused simulator acting as the synchronization layer. Because all commands run in sequence, the next request can only be sent once the previous one completes and the calculations can only start once all the requests finished. This creates a varying level of staleness among the received data that enter the calculations. It also increases the time lag between actions being sent to the agents. With the pursuer moving at 10m/s, even 500ms creates a difference of 5m.
+This is the same as the previous model, but without the paused simulator acting as the synchronization layer. Because all commands run in sequence, the next request can only be sent once the previous one completes and the calculations can only start once all the requests finished. This creates a varying level of staleness among the received data that enter the calculations. It also increases the time lag between actions being sent to the agents. With the pursuer moving at 10m/s, even relatively small delay of 500ms translates to a location difference of 5m.
 
 \subsection{Partially parallelized model}
-This model represents a simple (if short-sighted) solution to the concurrency issue. Since each agent is treated as a separate entity, at each timestamp, they are wrapped in their individual future. This means that while all communication and calculations for a single agent runs sequentially, the agents move in parallel. \emph{maybe a diagram?}
+This model represents a simple (if short-sighted) solution to the concurrency issue. Since each agent is treated as a separate entity, at each timestamp, they are wrapped in their individual future. This means that while all communication and calculations for a single agent runs sequentially, the code blocks for both agents are run in parallel. \emph{maybe a diagram?}
 
 \subsection{Fully parallelized model using Akka Streams}
-In this model, not only the agents move in parallel, but each operation within each agent is parallelized as well. There are no inter-process dependencies: the location is updated independently, the calculations use whatever latest data available and once the new action is calculated, it is sent to the agent. The whole process moves in the interleaved manner.
+In this model, not only the agents move in parallel, but each operation within each agent is parallelized as well. There are no inter-process dependencies: the location is updated independently, the calculations use whatever latest data available and once the new action is calculated, it is sent to the agent. The whole process moves in the interleaved manner. \emph{this whole paragraph needs to be changed}
 
-\subsection{Fully parallelized model with Kafka}
+\subsection{Fully parallelized model with Kafka - if there's time}
 This model builds on the previous one and adds on a message broker to allow for out of process and out of machine communication. 
 
 \section{Results}
