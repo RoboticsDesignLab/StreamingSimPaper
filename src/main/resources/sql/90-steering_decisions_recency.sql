@@ -3,4 +3,5 @@ select label, run, name, time, time - min(time) over (partition by run) as relat
        s.time - (SELECT MAX(sb.time) from steering_decisions sb WHERE sb.run = s.run and sb.time < s.time AND s.name = sb.name) AS since_my_last_move,
        s.time - (SELECT MAX(sb.time) from steering_decisions sb WHERE sb.run = s.run and sb.time < s.time AND s.name != sb.name) AS since_opp_last_move
 from steering_decisions s
+ORDER BY time
 ;
