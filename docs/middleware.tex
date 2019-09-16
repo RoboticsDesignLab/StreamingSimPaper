@@ -108,13 +108,25 @@ Reactive Streams is an initiative to provide a standard for asynchronous stream 
 In a system without back pressure, if the subscriber is slower than the publisher, then eventually the stream will stop - either because one of the parties runs out of memory and one of its buffers overflows or because the implementation can detect this situation but cannot  stop sending or accepting data until the situation is resolved (if it can be resolved at all). Although the latter scenario is somewhat more positive than the former, blocking back pressure (the capability of a system to detect when it must slow down and to do so by blocking) brings with it all of the disadvantages of a blocking system, which occupies resources such as thread and memory usage. \cite{reactive-web-apps}
 
 \subsection{DSL}
-Besides technical reasons, there is also additional motivation for the reactive stream. They provide a DSL (Domain Specific Language) \cite{dsl-book} to define the stream transformation graphs in a expressive way. 
-
-\begin{figure}
+\begin{figure*}
 	\centering
-	\includegraphics[width=6.0cm]{before-flow}
-	\caption{System design without streams.}\label{fig:before-stream}
-\end{figure}
+	\includegraphics[width=17.0cm]{streams-SDL}
+	\caption{The graph controlling the simulation expressed using the Akka Streams DSL. Symbol ~> stands for feeds into.}\label{fig:streas-SDL}
+\end{figure*}
+
+Besides technical reasons, there is also additional motivation for the reactive stream. They provide a DSL (Domain Specific Language) \cite{dsl-book} to define the stream transformation graphs in a expressive way. In a few lines of code it's very easy to express how the data sources are transformed and how data stream flows between the components and where it's terminated.
+
+This is illustrated in Figure \ref{fig:streas-SDL}. Location streams for both actors are merged together using a merge component and then fed into the relative distance calculator. The result is then broadcasted into 2 parallel streams, one for each agent. Based on the relative position, the solver calculates actions in the form of steering thetas. Each steering theta is then broadcasted into 3 parallel streams - the first one to update the AirSim, second to feed the updated theta back to the solver and the last one to persist the steering decision data.
+
+
+
+
+
+%\begin{figure}
+%	\centering
+%	\includegraphics[width=6.0cm]{before-flow}
+%	\caption{System design without streams.}\label{fig:before-stream}
+%\end{figure}
 
 
 \subsection{Actor Model}
@@ -210,6 +222,11 @@ In this model, not only the agents move in parallel, but each operation within e
 This model builds on the previous one and adds on a message broker to allow for out of process and out of machine communication. 
 
 \section{Results}
+\subsection{Trajectories}
+The first column of Table \ref{tab:ResultsNoVPN} and Table \ref{tab:ResultsVPN} illustrate the trajectories followed by the agents. The first image shows the ground truth with the drones orbiting in the relative distance of 8.55m.
+Trajectory for model 2
+
+
 \begin{table*}[t]
 	\centering
 	\begin{tabular}{p{5.2cm}p{5.2cm}p{5.2cm} }
@@ -229,7 +246,7 @@ This model builds on the previous one and adds on a message broker to allow for 
 		\includegraphics[width=5cm]{opp_move}\\			
 		\hline
 	\end{tabular}
-	\caption{Results of running the models over a reliable network with latency averaging 25ms.}
+	\caption{Results of running the models over a reliable network with latency averaging 25ms. The first column shows the trajectory followed by the agents. The second column shows the distance between the agents. The third column shows the recency of the data used for calculations and delay since the previous step.}
 	\label{tab:ResultsNoVPN}
 \end{table*}
 
