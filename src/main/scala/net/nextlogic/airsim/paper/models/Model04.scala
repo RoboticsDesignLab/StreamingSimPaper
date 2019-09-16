@@ -70,12 +70,12 @@ object Model04 extends App {
 
   val eLocationsE = locationsSource(Constants.e, airSimPoolMaster, 0.millis, 100.millis)
     .via(streamLogger[LocationUpdate])
-    .runWith(BroadcastHub.sink[LocationUpdate])
-    .map(f => f)
+//    .runWith(BroadcastHub.sink[LocationUpdate])
+//    .map(f => f)
   val pLocationsE = locationsSource(Constants.p, airSimPoolMaster, 0.millis, 100.millis)
     .via(streamLogger[LocationUpdate])
-    .runWith(BroadcastHub.sink[LocationUpdate])
-    .map(f => f)
+//    .runWith(BroadcastHub.sink[LocationUpdate])
+//    .map(f => f)
 
   val eSaveSD =
     Sink.foreach[RelPosCalculatorWithPhi](r =>
@@ -105,17 +105,17 @@ object Model04 extends App {
       val eBroadcast = builder.add(Broadcast[RelPosCalculatorWithPhi](outputPorts = 3))
       val pBroadcast = builder.add(Broadcast[RelPosCalculatorWithPhi](outputPorts = 3))
       // unfiltered model overloads the AirSim when run without VPN
-      val eFilter = builder.add(Flow[RelativePositionCalculator].filter(_.name == Constants.e))
-      val pFilter = builder.add(Flow[RelativePositionCalculator].filter(_.name == Constants.p))
+//      val eFilter = builder.add(Flow[RelativePositionCalculator].filter(_.name == Constants.e))
+//      val pFilter = builder.add(Flow[RelativePositionCalculator].filter(_.name == Constants.p))
 
       eLocationsE ~> merge
       pLocationsE ~> merge
 
       merge ~> relativeDistanceFlow(eRelPositionActor) ~>
-        broadcastRelDistance ~> eFilter ~> calculateEvadePhiFlow ~> eBroadcast ~> evadeAirSim(airSimPoolMaster)
+        broadcastRelDistance ~> calculateEvadePhiFlow ~> eBroadcast ~> evadeAirSim(airSimPoolMaster)
                                                                     eBroadcast ~> updateTheta(Constants.e, eRelPositionActor)
                                                                     eBroadcast  ~> eSaveSD
-        broadcastRelDistance ~> pFilter ~> calculatePursuePhiFlow ~> pBroadcast ~> pursueAirSim(airSimPoolMaster)
+        broadcastRelDistance ~> calculatePursuePhiFlow ~> pBroadcast ~> pursueAirSim(airSimPoolMaster)
                                                                      pBroadcast ~> updateTheta(Constants.p, eRelPositionActor)
                                                                      pBroadcast ~> pSaveSD
       ClosedShape
@@ -138,7 +138,7 @@ object Model04 extends App {
     val steeringDecisions = Source.queue[SteeringDecision](100, OverflowStrategy.dropHead)
       .via(Slick.flow(4, p =>
         sqlu"""INSERT INTO steering_decisions (label, run, name, time, rel_pos_x, rel_pos_y, my_pos_x, my_pos_y, my_pos_time, opp_pos_x, opp_pos_y, opp_pos_time, my_theta, opp_theta, phi) VALUES
-                ('Model 04B',
+                ('M04 VPN take 3',
                   $run, ${p.name}, ${p.time}, ${p.relativePosition.x}, ${p.relativePosition.y},
                   ${p.myPosition.x}, ${p.myPosition.y}, ${p.myPositionTime},
                   ${p.opponentPosition.x}, ${p.opponentPosition.y}, ${p.oppPositionTime},
