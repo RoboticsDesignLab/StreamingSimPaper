@@ -28,6 +28,7 @@
 % page charge instructions.
 % Put where the files are available in the appropriate places.
 \usepackage[pdftex]{graphicx}
+\usepackage[math]{cellspace}
 %\usepackage{epstopdf}
 % declare the path(s) where your graphic files are
 \graphicspath{{./resources/}{./resources/tmp/}}
@@ -211,26 +212,36 @@ This model builds on the previous one and adds on a message broker to allow for 
 \section{Results}
 \begin{table*}[t]
 	\centering
-	\begin{tabular}{p{6.5cm}p{4cm}p{6.5cm} }
+	\begin{tabular}{p{5.2cm}p{5.2cm}p{5.2cm} }
 
-		\includegraphics[width=6cm]{model01-no-sleep}&Model 01: Sequential model with AirSim paused for calculations and communication.& \includegraphics[width=6cm]{my_location}\\\hline 
-		\includegraphics[width=6cm]{model02}&Model 02: Sequential model with AirSim running throughout.&\includegraphics[width=6cm]{opp_location}\\			
+		\includegraphics[width=5cm]{model01-no-sleep}&
+		\includegraphics[width=5cm]{distance01}& \includegraphics[width=5cm]{my_location}\\\hline 
+		\includegraphics[width=5cm]{model02}&
+		\includegraphics[width=5cm]{distance02}&
+		\includegraphics[width=5cm]{opp_location}\\			
 		\hline
-		\includegraphics[width=6cm]{model03}&Model 03: Partially parallelized model through Futures.&\includegraphics[width=6cm]{my_move}\\			
+		\includegraphics[width=5cm]{model03}&
+		\includegraphics[width=5cm]{distance03}&
+		\includegraphics[width=5cm]{my_move}\\			
 		\hline
-		\includegraphics[width=6cm]{model04}&Model 04: Fully parallelized model using Akka Streams.&\includegraphics[width=6cm]{opp_move}\\			
+		\includegraphics[width=5cm]{model04}&
+		\includegraphics[width=5cm]{distance04}&
+		\includegraphics[width=5cm]{opp_move}\\			
 		\hline
 	\end{tabular}
-	\caption{Results of running the models over a reliable network with latency 30ms.}
+	\caption{Results of running the models over a reliable network with latency averaging 25ms.}
 	\label{tab:ResultsNoVPN}
 \end{table*}
 
 \begin{table*}[t]
 	\centering
-	\begin{tabular}{p{5.2cm}p{5.2cm}p{5.2cm} }
+	{\def\arraystretch{2}
+		
+	\begin{tabular}{p{5.4cm}p{5.4cm}p{5.4cm} }
 		
 		\includegraphics[width=5cm]{model01-vpn}&
-		\includegraphics[width=5cm]{distance01-vpn}& \includegraphics[width=5cm]{my_location_vpn}\\\hline 
+		\includegraphics[width=5cm]{distance01-vpn}& \includegraphics[width=5cm]{my_location_vpn}\\
+		\hline 
 		\includegraphics[width=5cm]{model02-vpn}&
 		\includegraphics[width=5cm]{distance02-vpn}&
 		\includegraphics[width=5cm]{opp_location_vpn}\\			
@@ -244,7 +255,8 @@ This model builds on the previous one and adds on a message broker to allow for 
 		\includegraphics[width=5cm]{opp_move_vpn}\\			
 		\hline
 	\end{tabular}
-	\caption{Results of running the models over a VPN with latency fluctuating between 30ms and 120ms (average around 70ms).}
+	}
+	\caption{Results of running the models over a VPN with fluctuating latency (average of 70ms). The first column shows the trajectory followed by the agents. The second column shows the distance between the agents. The third column shows the recency of the data used for calculations and delay since the previous step.}
 	\label{tab:ResultsVPN}
 \end{table*}
 
