@@ -70,12 +70,8 @@ object Model04 extends App {
 
   val eLocationsE = locationsSource(Constants.e, airSimPoolMaster, 0.millis, 100.millis)
     .via(streamLogger[LocationUpdate])
-//    .runWith(BroadcastHub.sink[LocationUpdate])
-//    .map(f => f)
   val pLocationsE = locationsSource(Constants.p, airSimPoolMaster, 0.millis, 100.millis)
     .via(streamLogger[LocationUpdate])
-//    .runWith(BroadcastHub.sink[LocationUpdate])
-//    .map(f => f)
 
   val eSaveSD =
     Sink.foreach[RelPosCalculatorWithPhi](r =>

@@ -8,9 +8,15 @@ import net.nextlogic.airsim.paper.sensors.location.RelativePositionActor.{Locati
 import scala.collection.mutable
 
 object RelativePositionActor {
+  import org.velvia.msgpack.CaseClassCodecs._
+  import org.velvia.msgpack.RawStringCodecs._
+  import net.nextlogic.airsim.paper.Structures.vCodec
+
   case class LocationUpdate(name: String, loc: Vector3r)
   case class ThetaUpdate(name: String, theta: Double)
   case object GetRelativePosition
+
+  implicit val luCodec = new CaseClassCodec2[LocationUpdate, String, Vector3r](LocationUpdate.apply, LocationUpdate.unapply) //(StringCodec, vCodec)
 }
 
 class RelativePositionActor extends Actor with ActorLogging {
@@ -20,7 +26,7 @@ class RelativePositionActor extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case LocationUpdate(name, loc) =>
-      log.debug(s"Received loc update: $name: $loc")
+      log.info(s"Received loc update: $name: $loc")
       locs.update(name, loc)
       val time = System.currentTimeMillis()
       locUpdates.update(name, time)
