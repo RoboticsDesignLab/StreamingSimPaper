@@ -29,6 +29,7 @@ import scala.concurrent.{Await, Future}
 object Model05 extends App {
   implicit val system = ActorSystem("paper-model-04")
   implicit val materializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider))
+  val resetProducerSettings = ProducerSettings(system, new StringSerializer, new StringSerializer)
   val producerSettings = ProducerSettings(system, new ByteArraySerializer, new ByteArraySerializer)
   val consumerSettings = ConsumerSettings(system, new ByteArrayDeserializer, new ByteArrayDeserializer)
 
@@ -64,9 +65,9 @@ object Model05 extends App {
 
   val startTime = System.currentTimeMillis()
 
-  val eLocationsE = locationsSource(Constants.e, airSimPoolMaster, 0.millis, 100.millis)
+  val eLocations = locationsSource(Constants.e, airSimPoolMaster, 0.millis, 100.millis)
     .via(streamLogger[LocationUpdate])
-  val pLocationsE = locationsSource(Constants.p, airSimPoolMaster, 50.millis, 100.millis)
+  val pLocations = locationsSource(Constants.p, airSimPoolMaster, 50.millis, 100.millis)
     .via(streamLogger[LocationUpdate])
 
   val eSaveSD =
@@ -93,14 +94,9 @@ object Model05 extends App {
     .map(msg => new ProducerRecord[Array[Byte], Array[Byte]]("locationUpdates", msg))
   val kafkaSerializer = Producer.plainSink(producerSettings)
 
-  val done1 = eLocationsE
-      .map(lu => pack(lu))
-      .map(msg => new ProducerRecord[Array[Byte], Array[Byte]]("locationUpdates", msg))
-      .runWith(Producer.plainSink(producerSettings))
-  val done2 = pLocationsE
-      .map(lu => pack(lu))
-      .map(msg => new ProducerRecord[Array[Byte], Array[Byte]]("locationUpdates", msg))
-      .runWith(Producer.plainSink(producerSettings))
+  Source.single("reset")
+    .map(msg => new ProducerRecord[String, String]("resetUpdates", msg))
+    .to(Producer.plainSink(resetProducerSettings))
 
   val producerGraph = RunnableGraph.fromGraph(
     GraphDSL.create(){ implicit  builder =>
@@ -108,8 +104,8 @@ object Model05 extends App {
 
       val merge = builder.add(Merge[LocationUpdate](2))
 
-      eLocationsE ~> merge
-      pLocationsE ~> merge
+      eLocations ~> merge
+      pLocations ~> merge
 
       merge ~> toMessagePack ~> toProducerRecord ~> kafkaSerializer
 
@@ -122,6 +118,7 @@ object Model05 extends App {
     .map(_.record.value())
     .map(bytes => unpack[RelPosCalculatorQWithPhi](bytes))
     .map(_.toRelPosCalculatorWithPhi)
+    .log("received action")
 
   val consumerGraph = RunnableGraph.fromGraph(
     GraphDSL.create(){ implicit builder =>
@@ -130,8 +127,16 @@ object Model05 extends App {
       val broadcast = builder.add(Broadcast[RelPosCalculatorWithPhi](outputPorts = 2))
       val eB = builder.add(Broadcast[RelPosCalculatorWithPhi](outputPorts = 2))
       val pB = builder.add(Broadcast[RelPosCalculatorWithPhi](outputPorts = 2))
-      val eFilter = builder.add(Flow[RelPosCalculatorWithPhi].filter(_.calc.name == Constants.e))
-      val pFilter = builder.add(Flow[RelPosCalculatorWithPhi].filter(_.calc.name == Constants.p))
+      val eFilter = builder.add(Flow[RelPosCalculatorWithPhi]
+        .filter(_.calc.name == Constants.e)
+        .buffer(1, overflowStrategy = OverflowStrategy.dropHead)
+        .throttle(1, 100.millis)
+      )
+      val pFilter = builder.add(Flow[RelPosCalculatorWithPhi]
+        .filter(_.calc.name == Constants.p)
+        .buffer(1, overflowStrategy = OverflowStrategy.dropHead)
+        .throttle(1, 100.millis)
+      )
 
 
       actionsSource ~> unpackCalculator ~> broadcast ~> eFilter ~> eB ~> evadeAirSim(airSimPoolMaster)
@@ -143,7 +148,7 @@ object Model05 extends App {
     }
   )
 
-  //producerGraph.run()
+  producerGraph.run()
   consumerGraph.run()
 
   system.scheduler.scheduleOnce(30.seconds) {
@@ -161,7 +166,7 @@ object Model05 extends App {
     val steeringDecisions = Source.queue[SteeringDecision](100, OverflowStrategy.dropHead)
       .via(Slick.flow(4, p =>
         sqlu"""INSERT INTO steering_decisions (label, run, name, time, rel_pos_x, rel_pos_y, my_pos_x, my_pos_y, my_pos_time, opp_pos_x, opp_pos_y, opp_pos_time, my_theta, opp_theta, phi) VALUES
-                ('Model 05',
+                ('Model 05 - delay 50, ml1',
                   $run, ${p.name}, ${p.time}, ${p.relativePosition.x}, ${p.relativePosition.y},
                   ${p.myPosition.x}, ${p.myPosition.y}, ${p.myPositionTime},
                   ${p.opponentPosition.x}, ${p.opponentPosition.y}, ${p.oppPositionTime},

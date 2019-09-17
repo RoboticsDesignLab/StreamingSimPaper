@@ -42,7 +42,7 @@ class RelativePositionActor extends Actor with ActorLogging {
       sender ! relativePosition
 
     case ThetaUpdate(name, theta) =>
-      log.debug(s"Received theta update: $name: $theta")
+      log.info(s"Received theta update: $name: $theta")
       thetas.update(name, theta)
 
     case other => log.error(s"Received something else $other")

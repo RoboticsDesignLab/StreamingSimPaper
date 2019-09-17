@@ -80,10 +80,17 @@ Handling and processing multi-channel communication with multiple robots is a ne
 \subsection{Simulator}
 This text describes integration with AirSim. AirSim is a simulator for drones, cars and more, built on Unreal Engine. It is open-source, cross platform, and supports hardware-in-loop with popular flight controllers such as PX4 for physically and visually realistic simulations. It is developed as an Unreal plugin that can simply be dropped into any Unreal environment. \cite{shah2018airsim}
 
-\subsubsection{Communication with AirSim}
-AirSim uses MessagePack \cite{messagepack} for communication. MessagePack is an RPC (Remote Procedure Call) implementation that provides fast and efficient communication between components written in different languages. At the time of writing, the last update of the JVM implementation has been done 7 years ago \footnote{https://github.com/msgpack-rpc/msgpack-rpc-java} and it also depends on no longer supported version of MessagePack serializer\footnote{Version 0.6.6 of MessagePack for Java (https://github.com/msgpack/msgpack-java)}. The RPC implementation doesn't provide any error handling which makes it impossible to properly handle errors returned by AirSim. This implementation is also blocking. Some of the methods calls are non-blocking (e.g. methods for controlling the vehicles such as \verb|moveByVelocityZ|), however, methods returning vehicle's state, camera feed, LIDAR feed are blocking. The return time of the blocking methods is especially important when using a cloud GPU to run AirSim. Depending on the network connection and type (e.g. VPN), the latency of \verb|getMultirotorState| (a method that returns position, orientation, velocity and acceleration of the vehicle) can be as high as 100ms.
+\subsection{Akka and Actor Model}
+Something about concurrency issues and how actor model addresses them?
+Need for new programming model (something like Akka Docs intro).
+Routing
 
-As such the a custom RPC implementation using a routing pool of Akka TCP clients was used. The solver uses ask messages to to send commands and receive responses. Figure \ref{fig:flow-in} shows how Akka Flow is used to map the vehicle name to the location in a non-blocking manner using the ask pattern.
+
+\subsubsection{Communication with AirSim}
+AirSim uses MessagePack \cite{messagepack} for communication. MessagePack is an RPC (Remote Procedure Call) implementation that provides fast and efficient communication between components written in different languages. At the time of writing, the last update of the JVM implementation was done 7 years ago \footnote{https://github.com/msgpack-rpc/msgpack-rpc-java} and it also depends on a no longer supported version of MessagePack serializer\footnote{Version 0.6.6 of MessagePack for Java (https://github.com/msgpack/msgpack-java)}. The RPC implementation doesn't provide any error handling which makes it impossible to properly handle errors returned by AirSim. This implementation is also blocking. Some of the methods calls are non-blocking (e.g. methods for controlling the vehicles such as \verb|moveByVelocityZ|), however, methods returning vehicle's state, camera feed, LIDAR feed are blocking. The return time of the blocking methods is especially important when using a cloud GPU to run AirSim. Depending on the network connection and type (e.g. VPN), the latency of \verb|getMultirotorState| (a method that returns position, orientation, velocity and acceleration of the vehicle) can be as high as 100ms.
+
+As such the a custom RPC implementation using a routing pool of Akka TCP clients was used. The solver uses ask messages to to send commands and receive responses. 
+%Figure \ref{fig:flow-in} shows how Akka Flow is used to map the vehicle name to the location in a non-blocking manner using the ask pattern.
 %\begin{figure}
 %	\centering
 %	\includegraphics[width=8.6cm]{air-sim-client}
@@ -128,11 +135,6 @@ This is illustrated in Figure \ref{fig:streas-SDL}. Location streams for both ac
 %	\caption{System design without streams.}\label{fig:before-stream}
 %\end{figure}
 
-
-\subsection{Actor Model}
-Something about concurrency issues and how actor model addresses them?
-Need for new programming model (something like Akka Docs intro).
-Routing
 
 
 

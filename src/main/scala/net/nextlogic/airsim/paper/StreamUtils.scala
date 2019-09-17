@@ -6,13 +6,13 @@ import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem, Cancellable, Props}
 import akka.pattern.{AskTimeoutException, ask}
 import akka.routing.SmallestMailboxPool
-import akka.stream.{Attributes, KillSwitches, SharedKillSwitch, Supervision}
+import akka.stream.{Attributes, KillSwitches, OverflowStrategy, SharedKillSwitch, Supervision}
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.util.Timeout
 import net.nextlogic.airsim.api.rpc.{AirSimDataHandler, MsgPackRpcActor}
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimMapResponse, AirSimRequest, RpcConnect}
 import net.nextlogic.airsim.paper.sensors.location.RelativePositionActor.{LocationUpdate, ThetaUpdate}
-import net.nextlogic.airsim.paper.sensors.location.{RelativePositionCalculator, RelPosCalculatorWithPhi}
+import net.nextlogic.airsim.paper.sensors.location.{RelPosCalculatorWithPhi, RelativePositionCalculator}
 import net.nextlogic.airsim.paper.solvers.HCMertzSolver
 
 import scala.concurrent.duration._
@@ -64,19 +64,26 @@ object StreamUtils {
     Flow[RelativePositionCalculator]
       .map(rc => RelPosCalculatorWithPhi(rc, HCMertzSolver.pursue(rc)))
 
+  val throttle = Flow[RelPosCalculatorWithPhi]
+    .buffer(1, overflowStrategy = OverflowStrategy.dropHead)
+    .throttle(1, 100.millis)
+
+
   def evadeAirSim(airSimPoolMaster: ActorRef): Sink[RelPosCalculatorWithPhi, NotUsed] =
     Flow[RelPosCalculatorWithPhi]
+      .via(throttle)
       .map(rcPhi => AirSimRequest("moveByVelocityZ", AirsimUtils.moveByVelocityZArgs(Constants.e, rcPhi.phi, Constants.eVelocity)))
       .to(Sink.foreach[AirSimRequest](r => airSimPoolMaster ? r))
 
   def pursueAirSim(airSimPoolMaster: ActorRef): Sink[RelPosCalculatorWithPhi, NotUsed] =
     Flow[RelPosCalculatorWithPhi]
+      .via(throttle)
       .map(rcPhi => AirSimRequest("moveByVelocityZ", AirsimUtils.moveByVelocityZArgs(Constants.p, rcPhi.phi, Constants.pVelocity)))
       .to(Sink.foreach[AirSimRequest](r => airSimPoolMaster ? r))
 
-  def updateTheta(name: String, relPositionActor: ActorRef): Sink[RelPosCalculatorWithPhi, NotUsed] =
+  def updateTheta(relPositionActor: ActorRef): Sink[RelPosCalculatorWithPhi, NotUsed] =
     Flow[RelPosCalculatorWithPhi]
-      .map(rcPhi => ThetaUpdate(name, rcPhi.phi))
+      .map(rcPhi => ThetaUpdate(rcPhi.calc.name, rcPhi.phi))
       .to(Sink.foreach[ThetaUpdate](tu => relPositionActor ? tu))
 
   def streamLogger[A]: Flow[A, A, NotUsed] = Flow[A]

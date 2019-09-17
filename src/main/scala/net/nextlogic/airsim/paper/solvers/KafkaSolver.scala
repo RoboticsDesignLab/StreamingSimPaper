@@ -3,7 +3,7 @@ package net.nextlogic.airsim.paper.solvers
 import akka.actor.{ActorSystem, Props}
 import akka.kafka.{ConsumerMessage, ConsumerSettings, ProducerSettings, Subscriptions}
 import akka.kafka.scaladsl.{Consumer, Producer}
-import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Merge, RunnableGraph}
+import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Merge, RunnableGraph, Sink}
 import akka.stream.{ActorMaterializer, ClosedShape, Materializer}
 import net.nextlogic.airsim.paper.Constants
 import net.nextlogic.airsim.paper.StreamUtils._
@@ -21,6 +21,11 @@ object KafkaSolver extends App {
 
   val consumerSettings = ConsumerSettings(system, new ByteArrayDeserializer, new ByteArrayDeserializer)
   val producerSettings = ProducerSettings(system, new ByteArraySerializer, new ByteArraySerializer)
+
+  Consumer.committableSource(consumerSettings, Subscriptions.topics("resetUpdates"))
+    .map(_ => relPositionActor ! ThetaUpdate(Constants.e, Math.cos(0.5)))
+    .map(_ => relPositionActor ! ThetaUpdate(Constants.p, 0))
+    .runWith(Sink.ignore)
 
   val actionsSource = Consumer.committableSource(consumerSettings, Subscriptions.topics("locationUpdates"))
   val toLocationUpdate = Flow[ConsumerMessage.CommittableMessage[Array[Byte], Array[Byte]]]
@@ -42,12 +47,14 @@ object KafkaSolver extends App {
       import GraphDSL.Implicits._
 
       val broadcastRelDistance = builder.add(Broadcast[RelativePositionCalculator](outputPorts = 2))
+      val broadCastResult = builder.add(Broadcast[RelPosCalculatorWithPhi](outputPorts = 2))
       val merge = builder.add(Merge[RelPosCalculatorWithPhi](inputPorts = 2))
 
       actionsSource ~> toLocationUpdate ~> relativeDistanceFlow(relPositionActor) ~>
         broadcastRelDistance ~> calculateEvadePhiFlow ~> merge
         broadcastRelDistance ~> calculatePursuePhiFlow ~> merge
-      merge ~> toMessagePack ~> toProducerRecord ~> kafkaSerializer
+      merge ~> broadCastResult ~> toMessagePack ~> toProducerRecord ~> kafkaSerializer
+               broadCastResult ~> updateTheta(relPositionActor)
 
 
       ClosedShape
