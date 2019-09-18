@@ -1,7 +1,7 @@
 drop view steering_decisions_location_recency CASCADE;
 
 create view steering_decisions_location_recency AS
-select label, run, name, time,
+select label, run, name, time, test_group,
        time - min(time) over (partition by run) as relative_time,
        rank() OVER (partition by run, name ORDER BY time) AS rank_by_name,
        time - my_pos_time AS my_loc_recency,

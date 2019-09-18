@@ -5,7 +5,7 @@ import java.net.InetSocketAddress
 import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem, Cancellable, Props}
 import akka.pattern.{AskTimeoutException, ask}
-import akka.routing.SmallestMailboxPool
+import akka.routing.{RoundRobinPool, SmallestMailboxPool}
 import akka.stream.{Attributes, KillSwitches, OverflowStrategy, SharedKillSwitch, Supervision}
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.util.Timeout
@@ -28,7 +28,8 @@ object StreamUtils {
   }
 
   def setUpAndConnectAirSim(system: ActorSystem): ActorRef = {
-    val airSimPoolMaster = system.actorOf(SmallestMailboxPool(5).props(
+    // !!!!!!!!!!! round robin has a way better performance than smallest mailbox !!!!!!!!!!!!
+    val airSimPoolMaster = system.actorOf(RoundRobinPool(5).props( //SmallestMailboxPool
       MsgPackRpcActor.props(
         new InetSocketAddress(Constants.ip, Constants.port), system.actorOf(Props[AirSimDataHandler]))
     ), "airSimClientPool"

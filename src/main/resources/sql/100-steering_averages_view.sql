@@ -1,6 +1,6 @@
 drop view steering_averages;
 create view steering_averages AS
-select substring(label, 0, 15) AS label, run, name,
+select substring(label, 0, 15) AS label, run, name, test_group,
        count(*) AS points,
        max(time) AS runtime,
        round(avg(my_loc_recency)::numeric, 3) my_loc_recency,
@@ -9,4 +9,4 @@ select substring(label, 0, 15) AS label, run, name,
        round(avg(since_my_last_move::numeric), 3) AS since_my_last_move,
        round(avg(since_opp_last_move::numeric), 3) AS since_opp_last_move
 from steering_decisions_location_recency
-group by label, name, run order by label, run, name;
+group by label, name, run, test_group order by label, run, name;

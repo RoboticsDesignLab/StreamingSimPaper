@@ -67,7 +67,7 @@ There are many high fidelity simulators that provide accurate modeling of physic
 
 While it is possible to reduce the communication delay by running everything on a single machine and thus eliminating the expensive network communication and reduce the calculation delay but simply using a more powerful machine, this approach may not scale sufficiently and it may not even be possible if external hardware is in the loop. E.g. the AirSim alone requires a modern GPU, significant amount of RAM and at least 8 core CPU. Running more computationally expensive tasks such as image recognition to process the camera feed or deep learning of policy gradient along side the rendering engine is not possible without compromising the stability of the entire system.
 
-We propose a different solution using parallelization. Instead of handling the tasks sequentially within a single time loop, they can be processed in parallel. This means that there is a separate sub-process \footnote{No specific implementation is implied here. The process is not tied to the specific processor core or thread.} handling updates from each sensor, separate sub-processes handling different parts of calculations and separate sub-processes handling communication of actions back to the agents. Indeed, even the processes within a single pipe-line can be parallelized (e.g. image recognition on the camera feed can be processed in parallel as soon as they are received).
+We propose a different solution using parallelization. Instead of handling the tasks sequentially within a single time loop, they can be processed in parallel. This means that there is a separate sub-process \footnote{No specific implementation is implied here. The process is not tied to the specific processor core or thread.} handling updates from each sensor, separate sub-processes handling different parts of calculations and separate sub-processes handling communication of actions back to the agents. Indeed, even the processes within a single pipe-line can be parallelized (e.g. image recognition on the camera feed can be processed in parallel as soon as they are received so the next image can start processing before the previous has completed).
 
 Handling and processing multi-channel communication with multiple robots is a necessary stepping stone to bridging the gap between simulation and reality. \emph{citations needed - there's plenty papers on bridging the gap}
 
@@ -81,15 +81,13 @@ Handling and processing multi-channel communication with multiple robots is a ne
 This text describes integration with AirSim. AirSim is a simulator for drones, cars and more, built on Unreal Engine. It is open-source, cross platform, and supports hardware-in-loop with popular flight controllers such as PX4 for physically and visually realistic simulations. It is developed as an Unreal plugin that can simply be dropped into any Unreal environment. \cite{shah2018airsim}
 
 \subsection{Akka and Actor Model}
-Something about concurrency issues and how actor model addresses them?
-Need for new programming model (something like Akka Docs intro).
-Routing
+Actor abstraction is a parallel programming model based on actors and messages. Immutable messages are passed between actors asynchronously and delivered into the recipient's mailbox. Each message is then completed in a single threaded fashion. This is also true for the internal state of the actor - it can only be modified and accessed by the actor \cite{scala-akka-streams}. Actor systems easily express a wide range of computational paradigms, and provide a natural extension of programming into concurrent (parallel) systems. This naturalness and ease of expression means that programs to solve complex problems do not add even more complexity of their own. This direct relationship of the code to the problem domain also makes it easier to optimize algorithms based on knowledge of that domain \cite{actor-foundation}.
 
 
 \subsubsection{Communication with AirSim}
-AirSim uses MessagePack \cite{messagepack} for communication. MessagePack is an RPC (Remote Procedure Call) implementation that provides fast and efficient communication between components written in different languages. At the time of writing, the last update of the JVM implementation was done 7 years ago \footnote{https://github.com/msgpack-rpc/msgpack-rpc-java} and it also depends on a no longer supported version of MessagePack serializer\footnote{Version 0.6.6 of MessagePack for Java (https://github.com/msgpack/msgpack-java)}. The RPC implementation doesn't provide any error handling which makes it impossible to properly handle errors returned by AirSim. This implementation is also blocking. Some of the methods calls are non-blocking (e.g. methods for controlling the vehicles such as \verb|moveByVelocityZ|), however, methods returning vehicle's state, camera feed, LIDAR feed are blocking. The return time of the blocking methods is especially important when using a cloud GPU to run AirSim. Depending on the network connection and type (e.g. VPN), the latency of \verb|getMultirotorState| (a method that returns position, orientation, velocity and acceleration of the vehicle) can be as high as 100ms.
+AirSim uses MessagePack \cite{messagepack} for communication. MessagePack is an RPC (Remote Procedure Call) implementation that provides fast and efficient communication between components written in different languages. At the time of writing, the last update of the JVM implementation was done 7 years ago \footnote{https://github.com/msgpack-rpc/msgpack-rpc-java} and it also depends on a no longer supported version of MessagePack serializer\footnote{Version 0.6.6 of MessagePack for Java (https://github.com/msgpack/msgpack-java)}. The RPC implementation doesn't provide any error handling which makes it impossible to properly handle errors returned by AirSim. This implementation cannot be used for camera feed because the images returned by \verb|simGetImage| call exceed the allowed value size. Lastly, mapping between its Value types and native Scala types is either missing or is problematic and slow.  
 
-As such the a custom RPC implementation using a routing pool of Akka TCP clients was used. The solver uses ask messages to to send commands and receive responses. 
+As such the a custom RPC implementation using a routing pool of Akka TCP clients was used. The solver uses ask messages to to send commands and receive responses in a non-blocking manner. A Scala msgpack4s \footnote{https://github.com/velvia/msgpack4s} library was used for serialization/de-serialization.
 %Figure \ref{fig:flow-in} shows how Akka Flow is used to map the vehicle name to the location in a non-blocking manner using the ask pattern.
 %\begin{figure}
 %	\centering
@@ -238,6 +236,7 @@ Model 4 follows the ground truth the most closely. The distance converges to 9.1
 
 
 \subsection{VPN Connection} 
+Under the more demanding conditions of the VPN environment, only the fully parallelized model had acceptable performance.
 
 \begin{figure*}
 	\centering

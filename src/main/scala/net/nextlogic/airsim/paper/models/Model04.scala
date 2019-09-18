@@ -121,7 +121,7 @@ object Model04 extends App {
 
     (airSimPoolMaster ? AirSimRequest("reset", Array())).foreach(_ => airSimPoolMaster ! akka.routing.Broadcast("close"))
 
-    system.scheduler.scheduleOnce(500.millis){
+    system.scheduler.scheduleOnce(1000.millis){
       Await.result(system.terminate(), 1.second)
       System.exit(1)
     }
@@ -131,7 +131,7 @@ object Model04 extends App {
     val steeringDecisions = Source.queue[SteeringDecision](100, OverflowStrategy.dropHead)
       .via(Slick.flow(4, p =>
         sqlu"""INSERT INTO steering_decisions (label, run, name, time, rel_pos_x, rel_pos_y, my_pos_x, my_pos_y, my_pos_time, opp_pos_x, opp_pos_y, opp_pos_time, my_theta, opp_theta, phi) VALUES
-                ('M04 VPN remove',
+                ('M04 VPN smallest mailbox',
                   $run, ${p.name}, ${p.time}, ${p.relativePosition.x}, ${p.relativePosition.y},
                   ${p.myPosition.x}, ${p.myPosition.y}, ${p.myPositionTime},
                   ${p.opponentPosition.x}, ${p.opponentPosition.y}, ${p.oppPositionTime},
