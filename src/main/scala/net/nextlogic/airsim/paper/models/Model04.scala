@@ -70,7 +70,7 @@ object Model04 extends App {
 
   val eLocations = locationsSource(Constants.e, airSimPoolMaster, 0.millis, 100.millis)
     .via(streamLogger[LocationUpdate])
-  val pLocations = locationsSource(Constants.p, airSimPoolMaster, 0.millis, 100.millis)
+  val pLocations = locationsSource(Constants.p, airSimPoolMaster, 50.millis, 100.millis)
     .via(streamLogger[LocationUpdate])
 
   val eSaveSD =
@@ -131,7 +131,7 @@ object Model04 extends App {
     val steeringDecisions = Source.queue[SteeringDecision](100, OverflowStrategy.dropHead)
       .via(Slick.flow(4, p =>
         sqlu"""INSERT INTO steering_decisions (label, run, name, time, rel_pos_x, rel_pos_y, my_pos_x, my_pos_y, my_pos_time, opp_pos_x, opp_pos_y, opp_pos_time, my_theta, opp_theta, phi) VALUES
-                ('M04 VPN smallest mailbox',
+                ('Model 04 smallest mailbox 50ms',
                   $run, ${p.name}, ${p.time}, ${p.relativePosition.x}, ${p.relativePosition.y},
                   ${p.myPosition.x}, ${p.myPosition.y}, ${p.myPositionTime},
                   ${p.opponentPosition.x}, ${p.opponentPosition.y}, ${p.oppPositionTime},
