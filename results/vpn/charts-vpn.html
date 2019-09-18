@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Charts VPN</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <script type="text/javascript">
+        google.charts.load("current", {packages:["corechart"]});
+        google.charts.setOnLoadCallback(drawCharts);
+
+        function drawCharts() {
+            drawChart(1);
+            drawChart(2);
+            drawChart(3);
+            drawChart(4);
+        }
+
+        const data = {
+            1: {
+                title: 'My Location Recency',
+                data: [
+                    ["Model", "Evader", "Pursuer" ],
+                    ["Model 1", 0, 0],
+                    ["Model 2", 97, 0.2],
+                    ["Model 3", 118, 0.03],
+                    ["Model 4", 35, 34]
+                ]
+            },
+            2: {
+                title: "Opponent's Location Recency",
+                data: [
+                    ["Model", "Evader", "Pursuer" ],
+                    ["Model 1", 0, 0],
+                    ["Model 2", 0.06, 97],
+                    ["Model 3", 0.06, 116],
+                    ["Model 4", 34, 35]
+                ]
+            },
+            3: {
+                title: "Since My Last Move",
+                data: [
+                    ["Model", "Evader", "Pursuer" ],
+                    ["Model 1", 100, 100],
+                    ["Model 2", 284, 284],
+                    ["Model 3", 198, 179],
+                    ["Model 4", 65, 64]
+                ]
+            },
+            4: {
+                title: "Since Opponent's Last Move",
+                data: [
+                    ["Model", "Evader", "Pursuer" ],
+                    ["Model 1", 100, 100],
+                    ["Model 2", 284, 236],
+                    ["Model 3", 129, 140],
+                    ["Model 4", 66, 61]
+                ]
+            }
+        };
+
+        function drawChart(type) {
+            const dataTable = google.visualization.arrayToDataTable(data[type]['data']);
+
+            const view = new google.visualization.DataView(dataTable);
+            view.setColumns([0, 1, {
+                calc: "stringify",
+                sourceColumn: 1,
+                type: "string",
+                role: "annotation"
+            }, 2, {
+                    calc: "stringify",
+                    sourceColumn: 2,
+                    type: "string",
+                    role: "annotation"
+                }]);
+
+            const options = {
+                title: data[type]['title'],
+                width: 500,
+                height: 300,
+                vAxis: {
+                    title: 'Time (ms)'
+                },
+                legend: { position: 'bottom' }
+            };
+            const chart = new google.visualization.ColumnChart(document.getElementById(`chart_${type}`));
+            chart.draw(view, options);
+        }
+    </script>
+</head>
+<body>
+<div id="chart_1"></div>
+<div id="chart_2"></div>
+<div id="chart_3"></div>
+<div id="chart_4"></div>
+</body>
+</html>
