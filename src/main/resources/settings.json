@@ -1,0 +1,18 @@
+{
+	"SeeDocsAt": "https://github.com/Microsoft/AirSim/blob/master/docs/settings.md",
+	"SettingsVersion": 1.2,
+	"SimMode": "Multirotor",
+	"ViewMode": "Manual",
+	"Vehicles": {
+		"Pursuer": {
+		  "VehicleType": "SimpleFlight",
+			"EnableCollisionPassthrogh": true,
+		  "X": 8, "Y": 0, "Z": -2
+		},
+		"Evader": {
+			"VehicleType": "SimpleFlight",
+			"EnableCollisionPassthrogh": true,
+			"X": 4, "Y": 0, "Z": -2
+		}
+  }
+}
