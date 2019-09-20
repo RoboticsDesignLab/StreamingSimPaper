@@ -115,7 +115,7 @@ object MsgPackCodecs {
                                             K5: Codec[A5]
                                           ) extends Codec[T] {
     val codec = new TupleCodec5[A1, A2, A3, A4, A5]
-    val _apply = Function.tupled(apply)
+    val _apply = apply.tupled
 
     override def pack(out: DataOutputStream, item: T): Unit = {
       codec.pack(out, unapply(item).get)
@@ -123,47 +123,47 @@ object MsgPackCodecs {
     val unpackFuncMap = codec.unpackFuncMap.mapValues(_.andThen(_apply))
   }
 
-//  class CaseClassCodec6[T, A1, A2, A3, A4, A5, A6](
-//                                            apply: (A1, A2, A3, A4, A5, A6) => T,
-//                                            unapply: T => Option[(A1, A2, A3, A4, A5, A6)]
-//                                          )(
-//                                            implicit K1: Codec[A1],
-//                                            K2: Codec[A2],
-//                                            K3: Codec[A3],
-//                                            K4: Codec[A4],
-//                                            K5: Codec[A5],
-//                                            K6: Codec[A6]
-//                                          ) extends Codec[T] {
-//    val codec = new TupleCodec6[A1, A2, A3, A4, A5, A6]
-//    val _apply = Function.tupled(apply)
-//
-//    override def pack(out: DataOutputStream, item: T): Unit = {
-//      codec.pack(out, unapply(item).get)
-//    }
-//    val unpackFuncMap = codec.unpackFuncMap.mapValues(_.andThen(_apply))
-//  }
-//
-//
-//  class CaseClassCodec7[T, A1, A2, A3, A4, A5, A6, A7](
-//                                            apply: (A1, A2, A3, A4, A5, A6, A7) => T,
-//                                            unapply: T => Option[(A1, A2, A3, A4, A5, A6, A7)]
-//                                          )(
-//                                            implicit K1: Codec[A1],
-//                                            K2: Codec[A2],
-//                                            K3: Codec[A3],
-//                                            K4: Codec[A4],
-//                                            K5: Codec[A5],
-//                                            K6: Codec[A6],
-//                                            K7: Codec[A7],
-//                                          ) extends Codec[T] {
-//    val codec = new TupleCodec7[A1, A2, A3, A4, A5, A6, A7]
-//    val _apply = Function.tupled(apply)
-//
-//    override def pack(out: DataOutputStream, item: T): Unit = {
-//      codec.pack(out, unapply(item).get)
-//    }
-//    val unpackFuncMap = codec.unpackFuncMap.mapValues(_.andThen(_apply))
-//  }
+  class CaseClassCodec6[T, A1, A2, A3, A4, A5, A6](
+                                            apply: (A1, A2, A3, A4, A5, A6) => T,
+                                            unapply: T => Option[(A1, A2, A3, A4, A5, A6)]
+                                          )(
+                                            implicit K1: Codec[A1],
+                                            K2: Codec[A2],
+                                            K3: Codec[A3],
+                                            K4: Codec[A4],
+                                            K5: Codec[A5],
+                                            K6: Codec[A6]
+                                          ) extends Codec[T] {
+    val codec = new TupleCodec6[A1, A2, A3, A4, A5, A6]
+    val _apply = apply.tupled
+
+    override def pack(out: DataOutputStream, item: T): Unit = {
+      codec.pack(out, unapply(item).get)
+    }
+    val unpackFuncMap = codec.unpackFuncMap.mapValues(_.andThen(_apply))
+  }
+
+
+  class CaseClassCodec7[T, A1, A2, A3, A4, A5, A6, A7](
+                                            apply: (A1, A2, A3, A4, A5, A6, A7) => T,
+                                            unapply: T => Option[(A1, A2, A3, A4, A5, A6, A7)]
+                                          )(
+                                            implicit K1: Codec[A1],
+                                            K2: Codec[A2],
+                                            K3: Codec[A3],
+                                            K4: Codec[A4],
+                                            K5: Codec[A5],
+                                            K6: Codec[A6],
+                                            K7: Codec[A7],
+                                          ) extends Codec[T] {
+    val codec = new TupleCodec7[A1, A2, A3, A4, A5, A6, A7]
+    val _apply = apply.tupled
+
+    override def pack(out: DataOutputStream, item: T): Unit = {
+      codec.pack(out, unapply(item).get)
+    }
+    val unpackFuncMap = codec.unpackFuncMap.mapValues(_.andThen(_apply))
+  }
 
 }
 

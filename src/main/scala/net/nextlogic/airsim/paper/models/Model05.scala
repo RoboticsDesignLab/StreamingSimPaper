@@ -17,7 +17,7 @@ import net.nextlogic.airsim.paper.{AirsimUtils, Constants}
 import net.nextlogic.airsim.paper.StreamUtils.{decider, evadeAirSim, locationsSource, pursueAirSim, relativeDistanceFlow, setUpAndConnectAirSim, sharedKillSwitch, streamLogger, updateTheta}
 import net.nextlogic.airsim.paper.persistence.SteeringDecision
 import net.nextlogic.airsim.paper.sensors.location.RelativePositionActor.{LocationUpdate, ThetaUpdate}
-import net.nextlogic.airsim.paper.sensors.location.{RelPosCalculatorQWithPhi, RelPosCalculatorWithPhi, RelativePositionActor, RelativePositionCalculator, RelativePositionCalculatorWithQ}
+import net.nextlogic.airsim.paper.sensors.location.{RelPosCalculatorWithPhi, RelativePositionActor, RelativePositionCalculator}
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer, BytesSerializer, StringSerializer}
 import org.velvia.MsgPack
@@ -116,8 +116,7 @@ object Model05 extends App {
   val actionsSource = Consumer.committableSource(consumerSettings, Subscriptions.topics("actionUpdates"))
   val unpackCalculator = Flow[ConsumerMessage.CommittableMessage[Array[Byte], Array[Byte]]]
     .map(_.record.value())
-    .map(bytes => unpack[RelPosCalculatorQWithPhi](bytes))
-    .map(_.toRelPosCalculatorWithPhi)
+    .map(bytes => unpack[RelPosCalculatorWithPhi](bytes))
     .log("received action")
 
   val consumerGraph = RunnableGraph.fromGraph(

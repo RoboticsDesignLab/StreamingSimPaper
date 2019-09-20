@@ -10,7 +10,7 @@ import net.nextlogic.airsim.paper.StreamUtils._
 import net.nextlogic.airsim.paper.sensors.location.{RelPosCalculatorWithPhi, RelativePositionActor, RelativePositionCalculator}
 import net.nextlogic.airsim.paper.sensors.location.RelativePositionActor.{LocationUpdate, ThetaUpdate}
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer, StringDeserializer}
+import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
 import org.velvia.msgpack._
 
 object KafkaSolver extends App {
@@ -36,7 +36,7 @@ object KafkaSolver extends App {
   relPositionActor ! ThetaUpdate(Constants.e, Math.cos(0.5))
 
   val toMessagePack = Flow[RelPosCalculatorWithPhi]
-    .map(calc => pack(calc.toRelPosCalculatorQWithPhi))
+    .map(calc => pack(calc))
   val toProducerRecord = Flow[Array[Byte]]
     .map(msg => new ProducerRecord[Array[Byte], Array[Byte]]("actionUpdates", msg))
   val kafkaSerializer = Producer.plainSink(producerSettings)
