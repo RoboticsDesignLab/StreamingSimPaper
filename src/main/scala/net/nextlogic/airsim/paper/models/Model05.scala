@@ -147,6 +147,7 @@ object Model05 extends App {
     }
   )
 
+  // TODO the first message is delayed by about 1s - need to do some warm-up messages first https://stackoverflow.com/questions/53728258/kafka-producer-is-slow-on-first-message
   producerGraph.run()
   consumerGraph.run()
 

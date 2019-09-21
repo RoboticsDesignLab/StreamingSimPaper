@@ -41,7 +41,7 @@ object KafkaSolver extends App {
     .map(msg => new ProducerRecord[Array[Byte], Array[Byte]]("actionUpdates", msg))
   val kafkaSerializer = Producer.plainSink(producerSettings)
 
-
+  // TODO the first message is delayed by about 1s - need to do some warm-up messages first https://stackoverflow.com/questions/53728258/kafka-producer-is-slow-on-first-message
   val solver = RunnableGraph.fromGraph(
     GraphDSL.create() { implicit builder =>
       import GraphDSL.Implicits._

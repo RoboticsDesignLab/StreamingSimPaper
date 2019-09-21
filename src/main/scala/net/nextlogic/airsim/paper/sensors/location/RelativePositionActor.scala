@@ -10,13 +10,14 @@ import scala.collection.mutable
 object RelativePositionActor {
   import org.velvia.msgpack.CaseClassCodecs._
   import org.velvia.msgpack.RawStringCodecs._
+  import org.velvia.msgpack.SimpleCodecs._
   import net.nextlogic.airsim.paper.Structures.vCodec
 
-  case class LocationUpdate(name: String, loc: Vector3r)
+  case class LocationUpdate(name: String, loc: Vector3r, time: Long = System.currentTimeMillis())
   case class ThetaUpdate(name: String, theta: Double)
   case object GetRelativePosition
 
-  implicit val luCodec = new CaseClassCodec2[LocationUpdate, String, Vector3r](LocationUpdate.apply, LocationUpdate.unapply) //(StringCodec, vCodec)
+  implicit val luCodec = new CaseClassCodec3[LocationUpdate, String, Vector3r, Long](LocationUpdate.apply, LocationUpdate.unapply) //(StringCodec, vCodec)
 }
 
 class RelativePositionActor extends Actor with ActorLogging {
@@ -25,10 +26,9 @@ class RelativePositionActor extends Actor with ActorLogging {
   var thetas: mutable.Map[String, Double] = mutable.Map[String, Double]()
 
   override def receive: Receive = {
-    case LocationUpdate(name, loc) =>
+    case LocationUpdate(name, loc, time) =>
       log.info(s"Received loc update: $name: $loc")
       locs.update(name, loc)
-      val time = System.currentTimeMillis()
       locUpdates.update(name, time)
 
       val relativePosition = RelativePositionCalculator(
