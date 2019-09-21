@@ -14,7 +14,7 @@ import akka.util.Timeout
 import net.nextlogic.airsim.api.rpc.{AirSimDataHandler, MsgPackRpcActor}
 import net.nextlogic.airsim.api.rpc.MsgPackRpcActor.{AirSimRequest, RpcConnect}
 import net.nextlogic.airsim.paper.StreamUtils.setUpAndConnectAirSim
-import net.nextlogic.airsim.paper.{AirsimUtils, Constants}
+import net.nextlogic.airsim.paper.{AirsimUtils, Constants, Timer}
 import net.nextlogic.airsim.paper.persistence.SteeringDecision
 import net.nextlogic.airsim.paper.sensors.location.RelativePositionCalculator
 import net.nextlogic.airsim.paper.solvers.HCMertzSolver
@@ -61,7 +61,9 @@ object Model03 extends App {
 
   (1 to 300).foreach{i =>
     Future {
-      val eLocationE = AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.e)))
+      val eLocationE = Timer.time({
+        AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.e)))
+      }, "eLocationE")
       val eLocationTimeE = System.currentTimeMillis()
       val pLocationE = AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.p)))
       val pLocationTimeE = System.currentTimeMillis()
@@ -81,7 +83,9 @@ object Model03 extends App {
     }
 
     Future {
-      val eLocationP = AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.e)))
+      val eLocationP = Timer.time({
+        AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.e)))
+      }, "eLocationP")
       val eLocationTimeP = System.currentTimeMillis()
       val pLocationP = AirsimUtils.getPositionBlocking(airSimPoolMaster ? AirSimRequest("simGetGroundTruthKinematics", Array(Constants.p)))
       val pLocationTimeP = System.currentTimeMillis()
@@ -114,7 +118,7 @@ object Model03 extends App {
     val steeringDecisions = Source.queue[SteeringDecision](100, OverflowStrategy.dropHead)
       .via(Slick.flow(4, p =>
         sqlu"""INSERT INTO steering_decisions (label, run, name, time, rel_pos_x, rel_pos_y, my_pos_x, my_pos_y, my_pos_time, opp_pos_x, opp_pos_y, opp_pos_time, my_theta, opp_theta, phi) VALUES
-                ('Model 03 VPN take 5',
+                ('Model 03 DELETE',
                   $run, ${p.name}, ${p.time}, ${p.relativePosition.x}, ${p.relativePosition.y},
                   ${p.myPosition.x}, ${p.myPosition.y}, ${p.myPositionTime},
                   ${p.opponentPosition.x}, ${p.opponentPosition.y}, ${p.oppPositionTime},
