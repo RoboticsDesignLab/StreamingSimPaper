@@ -226,8 +226,11 @@ Charts in the third column show recency of data used for calculations and time-l
 
 \subsection{Direct Connection}
 The first image shows the ground truth with the drones orbiting after about 11s. The distance between the agents converges fast to about 8.55m.
+
 The sequential model (model 2) performs the worst. The delays caused by the sequential execution of the blocking calls to update location details cause much longer turning times. This is especially visible in the pursuer because it's moving faster and any delay in control will have it move further off course. The result is the distance alternating between large and small values.
+
 The partially parallelized model performs reasonably well, the trajectory follows the ground truth closely, albeit with a larger diameter. The distance between the agents converges to about 10m. Because both location updates run in parallel, they finish on average in 25ms and the action sent to back to the simulator is delayed by the same 25ms as compared to the ground truth (see the Time Since My Last Move chart). This delay causes a minor drift in agents which is what causes the slightly larger radius.
+
 Model 4 follows the ground truth the most closely. The distance converges to 9.1 which results in a slightly larger diameter but smaller than model 3. The delays between moves are very close to 100ms just like in the ground truth model.
 
 \begin{figure*}
@@ -238,7 +241,12 @@ Model 4 follows the ground truth the most closely. The distance converges to 9.1
 
 
 \subsection{VPN Connection} 
-Under the more demanding conditions of the VPN environment, only the fully parallelized model had acceptable performance.
+The sequential model behaves in a similar to the direct connection, only longer delays cause the agents to drift further away\footnote{The trajectory had to be scaled down 3x to fit display window.}. Because the delays are compounded, the simulation took 85s compared to 50s under direct connection. 
+
+When using the direct connection and the partially-parallelized model (model 3), both blocking requests\footnote{The action requests are non-blocking. Each subsequent action cancels the previous task and starts new command.} (location updates for evader and pursuer) finished within the time-step window of 100ms so there were no uncompleted Futures overlapping to future iterations. Under VPN conditions, there are requests taking longer and some of Futures complete in the future iterations leading to race conditions. This may lead to locations from older iterations overwriting the newer updates and being used in calculations instead.
+
+Fully parallelized model (model 4) performs closest to the ground model. There are visible distortions, however, it does converge to the expected results of orbiting agents.
+
 
 \begin{figure*}
 	\centering
