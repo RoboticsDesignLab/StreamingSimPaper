@@ -29,7 +29,7 @@ object StreamUtils {
 
   def setUpAndConnectAirSim(system: ActorSystem): ActorRef = {
     // !!!!!!!!!!! round robin has a way better performance than smallest mailbox !!!!!!!!!!!!
-    val airSimPoolMaster = system.actorOf(RoundRobinPool(5).props( //SmallestMailboxPool
+    val airSimPoolMaster = system.actorOf(SmallestMailboxPool(5).props( //SmallestMailboxPool
       MsgPackRpcActor.props(
         new InetSocketAddress(Constants.ip, Constants.port), system.actorOf(Props[AirSimDataHandler]))
     ), "airSimClientPool"
