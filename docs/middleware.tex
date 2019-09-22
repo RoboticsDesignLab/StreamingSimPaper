@@ -37,15 +37,22 @@
 \usepackage[math]{cellspace}
 %\usepackage{textcomp}
 %\usepackage{epstopdf}
-%\usepackage{cite}
+\usepackage{natbib}
 \usepackage{afterpage}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% #DEFINES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % declare the path(s) where your graphic files are
 \graphicspath{{./resources/}{./resources/tmp/}}
 % and their extensions so you won't have to specify these with
 % every instance of \includegraphics
 \DeclareGraphicsExtensions{.pdf,.svg,.png}
+
+% --> \cite command is treated as \citep (so as to be natbib compatible)
+\let\cite\citep
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TITLE & AUTHOR
