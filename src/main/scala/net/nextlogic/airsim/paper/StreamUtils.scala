@@ -66,8 +66,8 @@ object StreamUtils {
       .map(rc => RelPosCalculatorWithPhi(rc, HCMertzSolver.pursue(rc)))
 
   val throttle = Flow[RelPosCalculatorWithPhi]
-    .buffer(1, overflowStrategy = OverflowStrategy.dropHead)
-    .throttle(1, 100.millis)
+    .buffer(size = 1, overflowStrategy = OverflowStrategy.dropHead)
+    .throttle(elements = 1, 100.millis)
 
 
   def evadeAirSim(airSimPoolMaster: ActorRef): Sink[RelPosCalculatorWithPhi, NotUsed] =
