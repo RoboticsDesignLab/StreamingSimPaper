@@ -330,9 +330,13 @@ Using Akka streams, the requests run in parallel, just like in model 3, but the 
 % CONCLUSION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
+We demonstrated the use of Akka Streams to parallelize robot simulation. Extensive forward simulation is important in many approaches used to automatically plan and dynamically control multiple interacting coordinated dynamic robots. The use of parallelized and asynchronous (cloud) simulation systems provides opportunity to distribute the simulation task broadly; however, it also provides the challenge of coordinating and synchronizing the overall process. 
+As demonstrated in Parts 2 and 3 of Figures \ref{fig:charts-no-vpn} and  \ref{fig:charts-vpn}, if this is not done carefully the simulation can lead to errant and erratic results. As then shown in Part 4 of Figure \ref{fig:charts-vpn}, the performance of the same algorithm using network connection with higher and much more variable latency can be improved via a streaming architecture.
 
-Extensive forward simulation is important in many approaches used to automatically plan and dynamically control multiple interacting coordinated dynamic robots.   The use of parallelized and asynchronous (cloud) simulation systems provides opportunity to distribute the simulation task broadly; however, it also provides the challenge of coordinating and synchronizing the overall process.
-As demonstrated in Parts 2 and 3 of Figures \ref{fig:charts-no-vpn} and  \ref{fig:charts-vpn}, if this is not done carefully the simulation can lead to errant and erratic results.  As then shown in Part 4 of Figure \ref{fig:charts-vpn}, the performance of the same algorithm using network connection with higher and much more variable latency can be improved via a streaming architecture.
+Akka Streams provide a powerful toolbox for dealing with variable data streams, such as the back pressure to regulate the data flow and encapsulation of data transformations into standalone and reusable components. The complete flow of data from inputs, through transformations to outputs can be described in a simple and expressive DSL. Parallel processing of multiple streams and parallelization within each stream reduces delays resulting from communication with multiple sensors and/or multiple agents as well as delays caused by expensive data processing, such as image recognition or gradient policy updates. 
+Effectively dealing with these real-world challenges is necessary when moving from local simulation to distributed simulation systems and further into the real-world applications.
+
+%This is necessary when dealing with multiple inputs from multiple sensors transmitted over the network.  
 
 
 %
