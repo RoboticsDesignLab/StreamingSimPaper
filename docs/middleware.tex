@@ -39,7 +39,7 @@
 %\usepackage{epstopdf}
 \usepackage{natbib}
 \usepackage{afterpage}
-
+%\usepackage{hyperref}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % #DEFINES
@@ -91,12 +91,12 @@ This structure helps mitigate the effects of latency and provides an expressive 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 
-From a squadron of flying drones to a school of submarines exploring together, designing controllers so as to enable automatic interactions between independent (autonomous) robotic vehicles is of interest in many application domains.  A strategy for constructing these controllers, or more generally their control policies, is to frame the problem as a Markov Decision Process (MDP) \cite{howard1960dynamic}.  The essence of this stochastic control approach is a forward adaptive search in which many candidate {policies} (each of which are themselves a set of control actions to take over the state-space) are evaluated, via a forward model, to find the expected value of a possible policy for the task.  This is then used to construct the next subsequent policy.
+From a squadron of flying drones to a school of submarines exploring together, designing controllers so as to enable automatic interactions between independent (autonomous) robotic vehicles is of interest in many application domains \cite{autohelitrack}.  A strategy for constructing these controllers, or more generally their control policies, is to frame the problem as a Markov Decision Process (MDP) \cite{howard1960dynamic}.  The essence of this stochastic control approach is a forward adaptive search in which many candidate {policies} (each of which are themselves a set of control actions to take over the state-space) are evaluated, via a forward model, to find the expected value of a possible policy for the task.  This is then used to construct the next subsequent policy.
 
 % Determining the strategy that subsequently governs the policy and control of these robots involves incorporating internal dynamics and external plots.
 For many complex robots this forward model is too complex to express as a closed-form analytic (linear) dynamical system and thus it is evaluated for each step of each case via simulation.  Robots in a typical dynamical case may require millions to tens of millions of simulation evaluations \cite{SAC}.   This would need to be repeated for every robot in the system.   Indeed, the underlying problem is a decentralized stochastic game \cite{redulla2018simulating}, which itself is a class of decentralized Markov Decision Process (DEC-MDP) that has been shown to be NEXP-complete and NP-hard \cite{papadimitriou1986intractable, bernstein2002complexity}.
 
-There are many high fidelity simulators that provide accurate modeling of physics, such as AirSim \cite{shah2018airsim}, V-REP \cite{rohmer2013v}, and MuJoCo \cite{Todorov2012MuJoCo} (which is the engine often used with simulation systems such as OpenAI Gym \cite{Brockman2016Gym} and the DeepMind Control Suite \cite{Tassa2018DMC}).  As hinited, an issue is that the number of simulations needed to train one robot (leave along multiple robots interacting which is an entire complexity class harder) is huge and can be on order of 200 million evaluations.  With the availability of affordable cloud computing services, this might seem to motivate the use of a distributed large-scale, high-fidelity simulation cluster; however, this introduces the issue that all this has to be synchronized and coordinated.
+There are many high fidelity simulators that provide accurate modeling of physics, such as AirSim \cite{shah2018airsim}, V-REP \cite{rohmer2013v}, and MuJoCo \cite{Todorov2012MuJoCo} (which is the engine often used with simulation systems such as OpenAI Gym \cite{Brockman2016Gym} and the DeepMind Control Suite \cite{Tassa2018DMC}).  As hinted, an issue is that the number of simulations needed to train one robot (leave along multiple robots interacting which is an entire complexity class harder) is huge and can be on order of 200 million evaluations.  With the availability of affordable cloud computing services, this might seem to motivate the use of a distributed large-scale, high-fidelity simulation cluster; however, this introduces the issue that all this has to be synchronized and coordinated.
 
 The training of the MDP and simulation models in most cases is dependent on these assumptions of data accuracy and known (and preferably low) latency.  Situations in which it is not possible to stop the simulation during calculations (e.g. using a cloud GPU) require a different approach. % and those that deal with remote agents
 As both calculations and network communication involve certain (varying) latencies, a simulation suite dealing with multiple sensors attached to multiple agents can result in material delays between receiving and processing the data and delivering the actions back to the agents.   This is elaborated in Section \ref{sec:exp} and demonstrated in Figures \ref{fig:charts-no-vpn} and \ref{fig:charts-vpn}.
@@ -108,7 +108,7 @@ While it is possible to reduce the communication delay by running everything on 
 We propose a different solution using real-time (asynchronous, non-blocking) parallelization. Instead of handling the tasks sequentially within a single (time) loop, they can be processed via separate sub-process  % \footnote{No specific implementation is implied here. The process is not tied to the specific processor core or thread.}
 handling updates from each sensor, different parts of calculations, and communication of actions back to the agents.
 Note, no specific implementation is implied here. The process is not tied to the specific processor core or thread.
-Indeed, even the processes within a single pipeline can be parallelized (e.g. image recognition on the camera feed can be processed in parallel as soon as the data are received so the next image can start processing before the previous has completed).
+Indeed, even the processes within a single pipeline can be parallelized (e.g. camera feed image recognition can be processed in parallel as soon as the data are received so the next image can start processing before the previous has completed).
 Handling and processing multi-channel simulation with multiple robots is a necessary stepping stone to bridging the gap between simulation and reality \cite{loquercio2019deep, james2019sim}. %\emph{citations needed - there's plenty papers on bridging the gap}
 
 
@@ -121,7 +121,7 @@ Handling and processing multi-channel simulation with multiple robots is a neces
 
 As noted, stochastic dynamic control processes, such as those in multi-vehicle Unmanned Aerial Vehicle (UAV) robot coordination is a MDP.   As the the transition model/dynamics and/or reward function are not always known, this problem is often treated reinforcement learning (RL) problem \cite{sutton2018reinforcement}.  This has recently been extended to continuous control domains  \cite{henderson2018deep} via algorithms such as the Deep Deterministic Policy Gradient (DDPG) \cite{DDPG} and Soft Actor-Critic (SAC) \cite{SAC}.
 
-RL methods work in tandem with a simulator that provides observations, which is then used by the learning algorithm to shape the policy that chooses an action. The simulator then processes the action and returns a reward. This simple time loop repeats until the end of the episode at which point there are more calculations (e.g. the policy is updated) and everything starts again. Because the simulator is on hold during the calculations and data transfer, there is no latency to be considered, the calculations use accurate state observations of the environment updated after every turn. When dealing with multiple agents, they are all updated at the same moment before the simulation resumes, and as such there is no delay and no inter-dependencies on the order of the agents' actions. This is shown in Figure \ref{fig:naive-solver}.
+Reinforcement Learning (RL) methods work in tandem with a simulator that provides observations, which is then used by the learning algorithm to shape the policy that chooses an action. The simulator then processes the action and returns a reward. This simple time loop repeats until the end of the episode at which point there are more calculations (e.g. the policy is updated) and everything starts again. Because the simulator is on hold during the calculations and data transfer, there is no latency to be considered, the calculations use accurate state observations of the environment updated after every turn. When dealing with multiple agents, they are all updated at the same moment before the simulation resumes, and as such there is no delay and no inter-dependencies on the order of the agents' actions. This is shown in Figure \ref{fig:naive-solver}.
 
 \begin{figure}[h]
 	\centering
@@ -131,7 +131,7 @@ RL methods work in tandem with a simulator that provides observations, which is 
 
 \subsection{Simulator}
 
-This text describes integration with AirSim. AirSim is a simulator for drones, cars and more, built on Unreal Engine. It is open-source, cross platform, and supports hardware-in-loop with popular flight controllers such as PX4 for physically and visually realistic simulations. It is developed as an Unreal plugin that can simply be dropped into any Unreal environment. \cite{shah2018airsim}
+This text describes integration with AirSim. AirSim is a simulator for drones, cars and more, built on Unreal Engine. It is open-source, cross platform, and supports hardware-in-loop with popular flight controllers such as PX4 for physically and visually realistic simulations. It is developed as a plugin that can simply be dropped into any Unreal environment \cite{shah2018airsim}. 
 
 \subsection{Akka and Actor Model}
 Actor abstraction is a parallel programming model based on actors and messages. Immutable messages are passed between actors asynchronously and delivered into the recipient's mailbox. Each message is then completed in a single threaded fashion. This is also true for the internal state of the actor - it can only be modified and accessed by the actor \cite{scala-Akka-streams}. Actor systems easily express a wide range of computational paradigms, and provide a natural extension of programming into concurrent (parallel) systems. This naturalness and ease of expression means that programs to solve complex problems do not add even more complexity of their own. This direct relationship of the code to the problem domain also makes it easier to optimize algorithms based on knowledge of that domain \cite{actor-foundation}.
@@ -174,7 +174,7 @@ In a system without back pressure, if the subscriber is slower than the publishe
 
 Besides technical reasons, there is also additional motivation for the reactive streams. They provide a DSL (Domain Specific Language) \cite{dsl-book} to define the stream transformation graphs in a expressive way. In a few lines of code it's very easy to express how the data sources are transformed and how data stream flows between the components and where it's terminated.
 
-This is illustrated in Figure \ref{fig:streas-SDL}. Location streams for both actors are merged together using a merge component and then fed into the relative distance calculator. The result is then broadcasted into 2 parallel streams, one for each agent. Based on the relative position, the solver calculates actions in the form of steering thetas. Each steering theta is then broadcasted into 3 parallel streams - the first one to update the AirSim, second to feed the updated theta back to the solver and the last one to persist the steering decision data.
+This is illustrated in Figure \ref{fig:streas-SDL}. Location streams for both actors are merged together using a merge component and then fed into the relative distance calculator. The result is then broadcast into 2 parallel streams, one for each agent. Based on the relative position, the solver calculates actions in the form of steering thetas. Each steering theta is then broadcast into three parallel streams - the first one to update the AirSim, second to feed the updated theta back to the solver and the last one to persist the steering decision data.
 
 
 
@@ -336,7 +336,7 @@ As demonstrated in Parts 2 and 3 of Figures \ref{fig:charts-no-vpn} and  \ref{fi
 Akka Streams provide a powerful toolbox for dealing with variable data streams, such as the back pressure to regulate the data flow and encapsulation of data transformations into standalone and reusable components. The complete flow of data from inputs, through transformations to outputs can be described in a simple and expressive DSL. Parallel processing of multiple streams and parallelization within each stream reduces delays resulting from communication with multiple sensors and/or multiple agents as well as delays caused by expensive data processing, such as image recognition or gradient policy updates. 
 Effectively dealing with these real-world challenges is necessary when moving from local simulation to distributed simulation systems and further into the real-world applications.
 
-The code developed in order to complete this study is available at https://github.com/RoboticsDesignLab/StreamingSimPaper.
+The code developed in order to complete this study is available at {\texttt{\small{https://github.com/RoboticsDesignLab/StreamingSimPaper}}}.
 
 %This is necessary when dealing with multiple inputs from multiple sensors transmitted over the network.  
 
