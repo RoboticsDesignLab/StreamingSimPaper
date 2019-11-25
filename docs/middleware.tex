@@ -1,4 +1,4 @@
-% !TeX spellcheck = en_US
+% !TeX spellcheck = en_GB
 %%%% acra.tex
 
 %\typeout{ACRA Instructions for Authors}
@@ -60,7 +60,7 @@
 \title{A Parallelized \& Asynchronous Forward Simulation Framework to Inform Multi-Robot UAV Coordination via Akka Streams}
 % Was: \title{Use of Akka Streams to Inform Forward Simulation in Robot Control}
 
-\author{Peter Böhm\textsuperscript{1,2} and Surya P. N. Singh\textsuperscript{2}
+\author{Peter B{\"o}hm\textsuperscript{1,2} and Surya P. N. Singh\textsuperscript{2}
 \\ \textsuperscript{1}NextLogic, Brisbane, Australia
 \\ \textsuperscript{2}The Robotics Design Lab, The University of Queensland, Brisbane, Australia
 \\ {\texttt{peter@nextlogic.biz, spns@uq.edu.au}}}
@@ -96,7 +96,7 @@ From a squadron of flying drones to a school of submarines exploring together, d
 % Determining the strategy that subsequently governs the policy and control of these robots involves incorporating internal dynamics and external plots.
 For many complex robots this forward model is too complex to express as a closed-form analytic (linear) dynamical system and thus it is evaluated for each step of each case via simulation.  Robots in a typical dynamical case may require millions to tens of millions of simulation evaluations \cite{SAC}.   This would need to be repeated for every robot in the system.   Indeed, the underlying problem is a decentralized stochastic game \cite{redulla2018simulating}, which itself is a class of decentralized Markov Decision Process (DEC-MDP) that has been shown to be NEXP-complete and NP-hard \cite{papadimitriou1986intractable, bernstein2002complexity}.
 
-There are many high fidelity simulators that provide accurate modeling of physics, such as AirSim \cite{shah2018airsim}, V-REP \cite{rohmer2013v}, and MuJoCo \cite{Todorov2012MuJoCo} (which is the engine often used with simulation systems such as OpenAI Gym \cite{Brockman2016Gym} and the DeepMind Control Suite \cite{Tassa2018DMC}).  As hinted, an issue is that the number of simulations needed to train one robot (leave along multiple robots interacting which is an entire complexity class harder) is huge and can be on order of 200 million evaluations.  With the availability of affordable cloud computing services, this might seem to motivate the use of a distributed large-scale, high-fidelity simulation cluster; however, this introduces the issue that all this has to be synchronized and coordinated.
+There are many high fidelity simulators that provide accurate modelling of physics, such as AirSim \cite{shah2018airsim}, V-REP \cite{rohmer2013v}, and MuJoCo \cite{Todorov2012MuJoCo} (which is the engine often used with simulation systems such as OpenAI Gym \cite{Brockman2016Gym} and the DeepMind Control Suite \cite{Tassa2018DMC}).  As hinted, an issue is that the number of simulations needed to train one robot (leave along multiple robots interacting which is an entire complexity class harder) is huge and can be on order of 200 million evaluations.  With the availability of affordable cloud computing services, this might seem to motivate the use of a distributed large-scale, high-fidelity simulation cluster; however, this introduces the issue that all this has to be synchronized and coordinated.
 
 The training of the MDP and simulation models in most cases is dependent on these assumptions of data accuracy and known (and preferably low) latency.  Situations in which it is not possible to stop the simulation during calculations (e.g. using a cloud GPU) require a different approach. % and those that deal with remote agents
 As both calculations and network communication involve certain (varying) latencies, a simulation suite dealing with multiple sensors attached to multiple agents can result in material delays between receiving and processing the data and delivering the actions back to the agents.   This is elaborated in Section \ref{sec:exp} and demonstrated in Figures \ref{fig:charts-no-vpn} and \ref{fig:charts-vpn}.
